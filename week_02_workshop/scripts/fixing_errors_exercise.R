@@ -19,15 +19,15 @@
 # Identify and correct these errors.
 
 # A.
-# The code below tries to load the 'tidyverse' package 
+# The code below tries to load the 'dplyr' package 
 # using the p_load function from the 'pacman' package
 # Incorrect code:
-pacman:p_load(tidyverse)
+pacman:p_load(dplyr)
 
 # B.
-# The code below tries to install and load the cowsay package
-# CLUE: The problem is in the first line. 
-# Once you fix that line, the rest should work.
+# The code below tries to load the cowsay package
+# But there is a problem
+# Incorrect code:
 install.packages(cowsay)
 cowsay::say("Welcome to GRAPH Courses!")
 
