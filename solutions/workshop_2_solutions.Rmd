@@ -280,7 +280,7 @@ head(n = 5, x = iris)
 
 Each block of code in this section attempts to use an R object, but contains an error because the object is not found. Identify and correct these errors.
 
-### Question 6A
+### Problem 6A
 The code below tries to calculate the mean of a sequence of tumor sizes.
 ```{r}
 # Incorrect code:
@@ -297,7 +297,7 @@ tumor_sizes_in_cm <- c(1, 4, 2, 1, 3)
 mean(tumor_sizes_in_cm)
 ```
 
-### Question 6B
+### Problem 6B
 
 The code below tries to plot the height of women in the `women` dataset.
 ```{r}
@@ -320,7 +320,7 @@ plot(Height_Women)
 
 Each block of code contains an error involving improper function nesting or intermediate objects.
 
-### Question 7A
+### Problem 7A
 The code below tries to use function nesting to plot the head (first 6 rows) of the `women` dataset. Identify and fix the error. 
 CLUE: It involves function order.
 ```{r}
@@ -336,7 +336,7 @@ The `plot()` function should be nested inside the `head()` function.
 plot(head(women))
 ```
 
-### Question 7B
+### Problem 7B
 The code below tries to plot the head (first 6 rows) of the `women` dataset by assigning an intermediate object. There is a problem on the second line though. Identify and fix it.
 ```{r}
 # Incorrect code:
@@ -359,7 +359,7 @@ plot(head_women)
 
 Each block of code contains an error involving a missing or misplaced character. Identify and correct these errors.
 
-### Question 8A
+### Problem 8A
 
 The code below tries to concatenate (join) two strings.
 ```{r}
@@ -379,7 +379,7 @@ joined_name <- paste(first_name, last_name)
 joined_name
 ```
 
-### Question 8B
+### Problem 8B
 The code below tries to view the top 10 rows of the iris dataframe.
 
 ```{r}
@@ -394,7 +394,7 @@ Remove the extra closing parenthesis.
 head(x = iris, n = 10)
 ```
 
-### Question 8C
+### Problem 8C
 The code below tries to create an R object with a character value.
 
 ```{r}
