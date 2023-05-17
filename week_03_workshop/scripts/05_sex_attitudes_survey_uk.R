@@ -26,6 +26,19 @@
 if(!require(pacman)) install.packages("pacman")
 pacman::p_load(tidyverse, janitor, here, esquisse)
 
+
+sex_attitudes_uk <- 
+  read_csv("data/02_india_tb_pathways_and_costs.csv") 
+
+
+india_tb <- 
+  read_csv("data/02_india_tb_pathways_and_costs.csv") 
+
+colombia <- 
+  read_csv("data/03_motorcycle_accidents_colombia_eng.csv") 
+
+
+esquisse::esquisser(colombia)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ## 2. Import data ----
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
