@@ -23,7 +23,7 @@
 ## 1. Load packages ----
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 if(!require(pacman)) install.packages("pacman")
-pacman::p_load(tidyverse, janitor, here)
+pacman::p_load(tidyverse, janitor, here, esquisse)
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ## 2. Import data ----
