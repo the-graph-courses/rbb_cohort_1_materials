@@ -1,0 +1,411 @@
+---
+title: 'Solutions to Workshop 2 exercise: Catching errors'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+  word_document:
+    toc: true
+editor_options:
+  markdown:
+    wrap: 100
+  canonical: true
+  chunk_output_type: inline
+---
+
+```{r, include = FALSE, warning = FALSE, message = FALSE}
+# Load packages 
+if(!require(pacman)) install.packages("pacman")
+pacman::p_load(knitr, here)
+
+knitr::opts_chunk$set(error = T)
+
+options(repos = list(CRAN="http://cran.rstudio.com/"))
+```
+
+# Solutions to Workshop 1 exercise: Catching errors
+
+
+
+## PACKAGES AND FUNCTIONS
+
+### Problem 1A
+
+The code below tries to load the 'dplyr' package using the `p_load()` function from the `pacman` package
+
+```{r}
+# Incorrect code:
+pacman:p_load(dplyr)
+
+```
+### Solution 1A
+
+There should be double colons (`::`) between package name and function name
+```{r}
+# Corrected code:
+pacman::p_load(dplyr)
+```
+Outcome: the `dplyr` package is loaded
+
+### Problem 1B
+
+The `cowsay` package is an R package that allows printing of character strings as messages from animals in your console. 
+The code below tries to load the `cowsay` package, but there is a problem
+
+```{r}
+# Incorrect code:
+install.packages(cowsay)
+cowsay::say("Welcome to GRAPH Courses!")
+```
+### Solution 1B
+Package name in `install.packages()` should be enclosed in quotes.
+```{r message=FALSE}
+# Corrected code:
+install.packages("cowsay")
+```
+Now the `cowsay` package is installed, so the following code will work:
+```{r message=FALSE}
+cowsay::say("Welcome to GRAPH Courses!")
+```
+
+## STRING MANIPULATION
+
+Each block of code in this section attempts to perform a string manipulation, but contains an error. Identify and correct these errors.
+
+### Problem 2A
+
+The code below tries to concatenate (join) two strings.
+```{r}
+# Incorrect code:
+first_name <- Ash
+# Message: "Error: object 'Ash' not found"
+last_name <- Ketchum
+# Message: "Error: object 'Ketchum' not found"
+paste(first_name, last_name)
+# Message: "Error: object 'first_name' not found"
+```
+
+### Solution 2A
+
+Strings should be enclosed in quotes.
+```{r}
+# Corrected code:
+first_name <- "Ash"
+last_name <- "Ketchum"
+```
+
+The two text strings have been assigned to objects (see your Environment tab), so now the `paste()` function will recognize and concatenate them. 
+```{r}
+paste(first_name, last_name)
+```
+
+### Problem 2B
+
+The code below tries to combine (join) two strings into one.
+```{r}
+# Incorrect code:
+first_name <- "John"
+last_name <- "Doe"
+full_name <- first_name + last_name
+full_name
+```
+
+### Solution 2B
+
+Use `paste()` instead of the plus sign (`+`) to join strings.
+```{r}
+# Corrected code:
+first_name <- "John"
+last_name <- "Doe"
+full_name <- paste(first_name, last_name)
+full_name
+```
+
+## ARITHMETIC
+
+### Problem 3A
+
+A patient took 12000 steps on Monday and 15000 steps on Tuesday. The code below tries to calculate the average number of steps taken by a patient. 
+
+```{r}
+# Incorrect code:
+steps_monday <- 12000
+steps_tuesday <- 15000
+average_steps <- steps_monday + steps_tuesday / 2
+average_steps
+```
+The code runs without giving an error, but the result is incorrect. The average of 12000 and 15000 is not 19500.
+
+### Solution 3A
+
+Parentheses are needed around the sum of steps before dividing by 2.
+```{r}
+# Corrected code:
+steps_monday <- 12000
+steps_tuesday <- 15000
+average_steps <- (steps_monday + steps_tuesday) / 2
+average_steps
+```
+
+### Problem 3B
+There are 500 smokers in a population of 20000. The code below attempts to calculate the percentage of smokers in the population. 
+```{r}
+# Incorrect code:
+total_population <- 20000
+smokers <- 500
+percentage_smokers <- (smokers ÷ total_population) * 100
+percentage_smokers
+```
+
+### Solution 3B
+Use slash (`/`) instead of the division symbol (÷).
+```{r}
+# Corrected code:
+total_population <- 20000
+smokers <- 500
+percentage_smokers <- (smokers / total_population) * 100
+percentage_smokers
+```
+
+
+## NAMING R OBJECTS
+
+Each block of code in this section attempts to create an R object, but contains an error related to the rules for naming R objects. Identify and correct these errors.
+
+### Problem 4A
+
+```{r}
+# Incorrect code:
+1st_student <- "John Doe"
+1st_student
+```
+Object names cannot start with a number.
+
+### Solution 4A
+
+```{r}
+# Corrected code:
+first_student <- "John Doe"
+first_student
+```
+
+### Problem 4B
+
+```{r}
+# Incorrect code:
+total population <- 10000
+total population
+```
+Object names cannot contain spaces.
+
+### Solution 4B
+```{r}
+# Corrected code:
+total_population <- 10000
+total_population
+```
+This is just one possible solution. You can use period case (e.g., `total.population`) or camel case (e.g., `totalPopulation`) to name objects. 
+
+### Problem 4C
+
+```{r}
+# Incorrect code:
+R-object <- "Sample data"
+R-object
+```
+Object names cannot contain hyphens.
+
+### Solution 4C
+
+```{r}
+# Corrected code:
+R_object <- "Sample data"
+R_object
+```
+
+## INCORRECT FUNCTION USAGE 
+
+Each block of code attempts to call a function, but contains an error. 
+Identify and correct these errors.
+
+### Problem 5A
+```{r}
+# Incorrect code:
+sqrt("16")
+```
+
+### Solution 5A
+The argument should be a numeric value, not a character.
+```{r}
+# Corrected code:
+sqrt(16)
+```
+
+### Problem 5B
+The code below tries to calculate the square root of a number.
+```{r}
+# Incorrect code:
+sqrt[16]
+```
+
+### Solution 5B
+Use parentheses instead of square brackets for function calls.
+```{r}
+# Corrected code:
+sqrt(16)
+```
+
+### Problem 5C
+The code below tries to get the first 5 rows of the `iris` dataframe.
+```{r}
+# Incorrect code:
+head(5, iris)
+```
+The arguments are in the wrong order and they are not named.
+
+### Solution 5C
+R expects the first argument of the `head()` function to be the object you want to return (`iris` dataframe) and the second should be the number of rows.
+```{r}
+# Corrected code:
+head(iris, 5)
+```
+
+If you name the arguments, the order no longer matters.
+```{r}
+# Alternate solution:
+head(n = 5, x = iris)
+```
+
+## OBJECT NOT FOUND
+
+Each block of code in this section attempts to use an R object, but contains an error because the object is not found. Identify and correct these errors.
+
+### Question 6A
+The code below tries to calculate the mean of a sequence of tumor sizes.
+```{r}
+# Incorrect code:
+tumor_sizes_in_cm <- c(1, 4, 2, 1, 3)
+mean(tumor_sizes_1n_cm)
+```
+NOTE that `c()` is a function to combine the items together. It is correct code. The problem is in the second line.
+
+### Solution 6A
+Fix the typo in the object name (change `1` to `i`).
+```{r}
+# Corrected code:
+tumor_sizes_in_cm <- c(1, 4, 2, 1, 3)
+mean(tumor_sizes_in_cm)
+```
+
+### Question 6B
+
+The code below tries to plot the height of women in the `women` dataset.
+```{r}
+# Incorrect code:
+Height_Women <- women$height
+plot(Height__women)
+```
+The problem is in the second line.
+
+### Solution 6B
+
+Fix two types in the object name (lower case `w` should be  uppercase `W`, and there is an extra underscore `_`).
+```{r}
+# Corrected code:
+Height_Women <- women$height
+plot(Height_Women)
+```
+
+## FUNCTION NESTING/ INTERMEDIATE OBJECTS
+
+Each block of code contains an error involving improper function nesting or intermediate objects.
+
+### Question 7A
+The code below tries to use function nesting to plot the head (first 6 rows) of the `women` dataset. Identify and fix the error. 
+CLUE: It involves function order.
+```{r}
+# Incorrect code:
+head(plot(women))
+```
+
+
+### Solution 7A
+The `plot()` function should be nested inside the `head()` function.
+```{r}
+# Corrected code:
+plot(head(women))
+```
+
+### Question 7B
+The code below tries to plot the head (first 6 rows) of the `women` dataset by assigning an intermediate object. There is a problem on the second line though. Identify and fix it.
+```{r}
+# Incorrect code:
+head_women <- head(women)
+plot(head)
+```
+
+### Soltion 7B
+The plot function should use the intermediate object (`head_women`) as its argument (not `head`).
+
+
+```{r}
+# Corrected code:
+head_women <- head(women)
+plot(head_women)
+```
+
+## MISSING OR MISPLACED CHARACTERS 
+
+
+Each block of code contains an error involving a missing or misplaced character. Identify and correct these errors.
+
+### Question 8A
+
+The code below tries to concatenate (join) two strings.
+```{r}
+# Incorrect code:
+first_name <- "John"
+last_name <- "Doe"
+joined_name <- paste(first_name last_name)
+joined_name
+```
+### Solution 8A
+Add a comma between the two arguments in `paste()`
+```{r}
+# Corrected code:
+first_name <- "John"
+last_name <- "Doe"
+joined_name <- paste(first_name, last_name)
+joined_name
+```
+
+### Question 8B
+The code below tries to view the top 10 rows of the iris dataframe.
+
+```{r}
+# Incorrect code:
+head(x = iris, n = 10))
+```
+
+### Solution 8B
+Remove the extra closing parenthesis.
+```{r}
+# Corrected code:
+head(x = iris, n = 10)
+```
+
+### Question 8C
+The code below tries to create an R object with a character value.
+
+```{r}
+# Incorrect code:
+name <- toupper('John Doe")
+```
+
+### Solution 8C
+Fix the mismatched quotes by changing them both to single `'` or double quotes `"`.
+```{r}
+# Corrected code:
+name <- toupper("John Doe")
+```
+
