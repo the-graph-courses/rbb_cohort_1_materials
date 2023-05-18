@@ -7,7 +7,7 @@
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # This assignment tests that you can: 
-# - read in data with `read_csv()` and the `here()` function.
+# - read in data with the `read_csv()` function.
 # - create frequency tables with `janitor::tabyl()` and save those with `write_csv()`
 # - create simple plots with `esquisse::esquisser()` and save those plots
 # These skills were covered in the following lessons 
@@ -24,25 +24,12 @@
 ## 1. Load packages ----
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 if(!require(pacman)) install.packages("pacman")
-pacman::p_load(tidyverse, janitor, here, esquisse)
+pacman::p_load(tidyverse, janitor, esquisse)
 
-
-sex_attitudes_uk <- 
-  read_csv("data/02_india_tb_pathways_and_costs.csv") 
-
-
-india_tb <- 
-  read_csv("data/02_india_tb_pathways_and_costs.csv") 
-
-colombia <- 
-  read_csv("data/03_motorcycle_accidents_colombia_eng.csv") 
-
-
-esquisse::esquisser(colombia)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ## 2. Import data ----
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# INSTRUCTION: Here, use `read_csv()` and `here()` to load in your dataset from the "data" folder
+# INSTRUCTION: Here, use `read_csv()` to load in your dataset from the "data" folder
 # The dataset you need should have the same name as your script. 
 
 
