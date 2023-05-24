@@ -4,89 +4,103 @@ output:
   prettydoc::html_pretty:
     theme: architect
     toc: true
-author: "Group_member_1 and group_member_2"
 date: "2022-10-25"
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r include = FALSE}
-knitr::opts_chunk$set(echo = FALSE)
 # packages
 if(!require(pacman)) install.packages("pacman")
 pacman::p_load(tidyverse, here, patchwork, janitor, esquisse, flextable)
 ```
 
-# Instructions
+# Assignment Instructions
 
-1.  First download the course repo [here](https://minhaskamal.github.io/DownGit/#/home?url=https://github.com/the-graph-courses/rbp_cohort_0_materials){target="_blank"}.
+1.  First download the course repo [here](https://minhaskamal.github.io/DownGit/#/home?url=https://github.com/the-graph-courses/rbb_cohort_1_materials/tree/main/week_04_workshop) or by clicking on the relevant button on the assignment page.
 
-2.  Unzip the downloaded folder. Remember to "extract all" if you are on windows.
+2.  If you are on a PC, go into your downloads folder, right click on the zip file downloaded, and click on "extract all". (If you are on a Mac, you can directly click on the downloaded folder)
 
-3.  Then click on the RStudio Project file in the unzipped folder to open the project in RStudio. From the Files pane of RStudio, open the rmd subfolder.
+    ![](images/extract_all_on_windows.jpeg){width="477"}
 
-4.  In the "rmd" sub-folder, the instructions for your exercise are outlined (these are the same instructions you see here).
+3.  Then click on the RStudio Project file in the unzipped folder to open the project in RStudio.
 
-5.  **Your task will be to create a short rmarkdown-based report of the 4**
+    ![](images/open_rstudio_project-01.jpg){width="348"}
 
-6.  Next, each group member should **select one categorical variable** from their chosen dataset. Their task will be to **create a short R-Markdown-based HTML report showing the frequency distribution of the chosen variable across two sexes.**
+4.  From the Files pane of RStudio, explore the "data" and "rmd" subfolders.
 
-    For example, Jane and John pick the India TB dataset. Jane looks at the frequency distribution of the *education* variable for men and women. And John looks at the distribution of the *employment* variable for men and women.
+    ![](images/explore_subfolders-01.jpg){width="590"}
 
-7.  You can do the initial work on their own, but the final document for submission will be a single HTML file containing a section for each chosen categorical variable.
+5.  In the "rmd" sub-folder, the instructions for your exercise are outlined (these are the same instructions you see here).
 
-    For example, Jane and John will submit an HTML document with two sections: the first section (primarily done by Jane) on the distribution of the education variable for both sexes, and the second section (primarily done by John) covering the distribution of the employment variable for both sexes.
+6.  In the "data" sub-folder, the dataset you will be working on is called "india_tb_pathways_and_costs.csv". The other dataset is for example purposes only.
 
-8.  **Each section of the report must contain these four things:**
+7.  **Your task will be to create a short rmarkdown-based report comparing the distribution of TWO CATEGORICAL variables in the india TB pathways dataset. For example, you could compare**
+
+    -   Education level and Smoking Habit
+
+    -   Employment and Visit Location
+
+    -   Alcohol consumption and Diabetes
+
+8.  **The report must contain these four things:**
 
     a.  A plot created with {ggplot2}/{esquisse}
 
-    b.  A table created with {flextable} (See the flextable [book](https://ardata-fr.github.io/flextable-book/){target="_blank"} for tips)
+    b.  A table created with {flextable} (You can see the flextable [book](https://ardata-fr.github.io/flextable-book/){target="_blank"} for tips)
 
     c.  At least one use of *inline R code* within the Rmd.
 
     d.  At least one possible *area of improvement* mentioned.
 
-9.  As noted above, since RStudio cloud caused some problems in the last session (specifically with {esquisse}), it is recommended that you first work on your local RStudio, then when it is time to combine your work, you can:
+9.  Knit your report into a valid HTML or PDF file. When you knit your file, please turn off code echo on all chunks, so that you can get a neat output.
 
-    a.  both copy your Rmd code into a document in your pod folder on RStudio Cloud, and do the final render from there;
+10. To submit your work, please create a zip file of your folder and upload that to our assignment page. Make sure the folder contains both your Rmd file and your knitted HTML or PDF.
 
-    b.  copy the material onto one of the group member's computers, and perform the final render from there.
-
-10. **To submit your work** when you are done, you should share your document online, using the [Rpubs](https://rpubs.com/){target="_blank"} service. This can be done as described in the video [here](https://www.youtube.com/watch?v=GJ36zamYVLg&ab_channel=EEHolmes-DataScience){target="_blank"}. The link to this Rpubs page should be posted as a comment on our lesson page.
-
-11. \*Around 7:20pm UTC+2, a single person from the group will present the work done so far. Your work does not have to be finished by this time. You'll simply present what you succeeded at doing and what you struggled with.
-
-12. The final due date is **Tuesday, Nov 1 at 23:59pm UTC+2**. You are encouraged to visit one of our study halls if you need assistance with this later.\*
-
-Finally, note that your work will be judged simply on whether you have met the four requirements mentioned above; it does not have to an amazing document. Just follow the instructions and you'll get full marks!
-
-The rest of this document is an example of what one section of a report might look like.
+    ![Send to zip file on Windows](images/send_to_zip_windows.jpg)
 
 ------------------------------------------------------------------------
 
-# Workshop 3 Assignment: Colombia Motorcycle Accidents data
+The rest of this document is a model example of what such a report might look like. Note that
 
-## Age distribution of fatalities per sex group
+-   The example uses the motorcycle accdients dataset from Colombia, but you should use the TB dataset.
 
-**Work primarily done by group member 1, Jane Doe**
+-   For demonstration purposed, code echo is turned on in this example report. But in your own reports, it should be turned off. (That is, your finished product should not show any code).
 
-The dataset we chose provides information on deaths due to motorcycle accidents in Medellín, a Colombian city, as recorded in medical and police certificates.
+------------------------------------------------------------------------
 
-```{r message = F}
-col_accidents <- read_csv(here("week_03/data/03_motorcycle_accidents_colombia.csv"))
+# Example Assignment
+
+Name: Jane Doe
+
+Date: May 23, 2023
+
+## Age group distribution per sex group
+
+The dataset provides information about deaths caused by motorcycle accidents in Medellín, a Colombian city. The data is sourced from medical and police certificates.
+
+```{r message = F, echo = F}
+col_accidents <- 
+  read_csv(here("data/teachers_example_data_motorcycle_accidents_colombia.csv"))
+
+# the age group column name (and a few others) have in them. This makes them hard to work with.
+# To remove these from the column names, we can use the clean_names function from janitor
+col_accidents_clean <- clean_names(col_accidents)
 ```
 
-I chose to look at the difference in the age distribution for male and female victims.
+The two categorical variables I chose to look at are age group and sex.
 
-The plot below shows the age distributions for each sex:
+The plot below shows the age group distributions for each sex:
 
 ```{r echo = F, fig.width=9}
 # esquisse::esquisser(col_accidents)
 
+# Plot for male victims.
 male <-
-  col_accidents %>%
-  filter(REC_SEXO %in% "Masculino") %>%
+  col_accidents_clean %>%
+  filter(gender %in% "male") %>%
   ggplot() +
-  aes(x = `REC_GRUPO EDAD`) +
+  aes(x = age_group) +
   geom_bar(fill = "#678BCB") +
   labs(title = "Age group distribution of fatalities from motorcycle accidents",
        subtitle = "(Men)") +
@@ -94,47 +108,111 @@ male <-
   theme(plot.title = element_text(size = 15L, face = "bold"),
         plot.subtitle = element_text(size = 15L))
   
-  
+# Plot for female victims
 female <-
-  col_accidents %>%
-  filter(REC_SEXO %in% "Femenino") %>%
+  col_accidents_clean %>%
+  filter(gender %in% "female") %>%
   ggplot() +
-  aes(x = `REC_GRUPO EDAD`) +
+  aes(x = age_group) +
   geom_bar(fill = "#A4BBB6") +
   labs(subtitle = "(Women)") +
   theme_minimal() +
-  theme(plot.title = element_text(size = 15L,
-                                  face = "bold"),
+  theme(plot.title = element_text(size = 15L,face = "bold"),
         plot.subtitle = element_text(size = 15L))
 
+# combine plots with `+` or `/` function from the patchwork package. 
+# see teacher commentary below
+# or see https://patchwork.data-imaginist.com/ for details on using patchwork
 
 male + female
-# alternatively: male / female
 ```
-
-*Teacher commentary: We have not yet learned how to create dodged/faceted bar charts, which would be best for showing differences between genders. So for now, you should use the + and / syntax from the patchwork package to combine two plots, one for each sex. This is shown in the code chunk above. (Note that if you are reading this from the HTML document, you cannot see the code chunks. You need to look at the source Rmd file for this.)*
 
 And the table below shows similar information:
 
-```{r}
-freq_table <- tabyl(col_accidents, `REC_GRUPO EDAD`, REC_SEXO)
+```{r echo = F}
+freq_table <- tabyl(col_accidents_clean, age_group, gender)
 flex <- flextable(freq_table)
-flex_with_caption <- set_caption(flex, caption = "Age group distribution of fatalities from motorcycle accidents")
+
+# extract specific numbers
+women_20_to_24 <- freq_table[2,2]
+men_20_to_24 <- freq_table[2,3]
+
+flex_with_caption <- set_caption(flex, caption = "Age & gender distribution of fatalities from motorcycle accidents")
 flex_with_caption
 ```
 
-For both sexes, the age group with the most deaths was the 20 to 24 age group. In women, there were `r freq_table[2,2]` deaths in this age group, and in men there were `r freq_table[2,3]` deaths.
+For both sexes, the age group with the most deaths was the 20 to 24 age group. In women, there were `r women_20_to_24` deaths in this age group, and in men there were `r men_20_to_24` deaths.
 
-*Teacher commentary: We have not yet learned how to extract specific slices of data from a data frame. So for now, you should use the syntax demonstrated above: within a pair of square brackets, place the row number, a comma, then the column number. (Note that if you are reading this from the HTML document, you cannot see the code chunks. You need to look at the source Rmd file for this.)*
-
-### Areas of improvement
+## Areas of improvement
 
 -   The two bar charts have different numbers of bars. This is not ideal for comparisons.
 -   The age group labels are too horizontally compressed.
--   I do not yet know how to change the variable names, so I left in the `REC_GRUPO EDAD` name in the table and plot.
+-   I do not yet know how to change the variable names, so I left in the name age_group in the table and plot.
 
-## Distribution of roles, per sex group
 
-**Work primarily done by group member 2, John Doe...**
+---
 
-*Teacher commentary: As already mentioned, your final document should contain all the sections from the different group members. Note that once the work has been done for one variable, it is easy to copy and paste the code to reproduce the analyses on another variable. This makes it easy to help out your group members who are struggling!*
+# Teacher Commentary
+
+## Using patchwork
+
+The `patchwork` package allows you to combine multiple plots into a single plot, which can make it easier to compare plots and keep your data visualization tidy and organized. 
+
+Let's look at a simple example. Assume we have two plots called `plot1` and `plot2`:
+
+```{r}
+# load the required packages
+pacman::p_load(tidyverse, patchwork)
+
+# Create plot1
+plot1 <- ggplot(mtcars, aes(x = mpg, y = hp)) +
+         geom_point() 
+
+# Create plot2
+plot2 <- ggplot(mtcars, aes(x = mpg, y = disp)) +
+         geom_point()
+
+# Combine plots vertically with patchwork
+combined_plot <- plot1 / plot2
+combined_plot
+```
+
+In this example, the `/` operator is used to arrange the plots vertically, with `plot1` on top and `plot2` at the bottom. 
+
+If you wanted the plots to be arranged horizontally, you would use the `+` operator instead:
+
+```{r}
+# Combine plots vertically with patchwork
+combined_plot_2 <- plot1 + plot2
+combined_plot_2
+```
+
+## Inline Code
+
+In R markdown, we use specific syntax to include inline R code, which is R code that runs within the text of your document. To use inline R code, we simply include the R code within backticks and precede it with an `r` like so
+
+```{r eval = F}
+We can found that there were `r your_code_here` cases in Category B.
+```
+
+One common use of inline R code is to access and display specific elements from a data object such as a matrix or dataframe. To access a specific element, we use square brackets `[]` with the row and column indices. For instance, if we have a matrix `m`, we can access the element at row 2, column 3 as follows: `m[2, 3]`. 
+
+Let's take an example with a Markdown table. Suppose we have a table as follows:
+
+| Category | Count |
+|----------|-------|
+| A        | 10    |
+| B        | 20    |
+| C        | 30    |
+
+If we want to display the count for Category B in our text, we could write something like this in our Rmarkdown script (not in a code chunk):
+
+```{r eval = F}
+We found that there were `r counts[2, 2]` cases in Category B.
+```
+
+When this R Markdown document is knitted, it will display as:
+
+"We found that there were 20 cases in Category B."
+
+
