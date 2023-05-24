@@ -31,7 +31,7 @@ pacman::p_load(tidyverse, here, patchwork, janitor, esquisse, flextable)
 
     ![](images/explore_subfolders-01.jpg){width="590"}
 
-5.  In the "rmd" sub-folder, the instructions for your exercise are outlined (these are the same instructions you see here).
+5.  In the "rmd" sub-folder, the instructions for your exercise are outlined (these are the same instructions you see here). There is also an example report which you can use for reference.
 
 6.  In the "data" sub-folder, the dataset you will be working on is called "india_tb_pathways_and_costs.csv". The other dataset is for example purposes only.
 
