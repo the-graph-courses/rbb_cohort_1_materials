@@ -4,6 +4,7 @@ output:
   prettydoc::html_pretty:
     theme: architect
     toc: true
+author: Your name here
 date: "2023-05-24"
 editor_options: 
   chunk_output_type: console
@@ -26,13 +27,9 @@ This document is a model example of what a report for this assignment might look
 
 # Example Assignment
 
-Name: Jane Doe
+## Road Injuries of Motorcyclists in Medellín
 
-Date: May 23, 2023
-
-## Road Injuries of Motorcyclists
-
-This dataset provides information about deaths caused by motorcycle accidents in Medellín, a Colombian city. The data is sourced from medical and police certificates.
+The dataset analysed in this report provides information about deaths caused by motorcycle accidents in Medellín, a Colombian city. The data is sourced from medical and police certificates and can he access [here](https://zenodo.org/record/4836304).
 
 ```{r message = F, echo = F}
 # Data import and cleaning
