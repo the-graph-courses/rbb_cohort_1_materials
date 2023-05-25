@@ -20,8 +20,8 @@ pacman::p_load(tidyverse, here, patchwork, janitor, esquisse, flextable)
 
 This document is a model example of what a report for this assignment might look like. Note that
 
--   The example uses the motorcycle accdients dataset from Colombia, but you should use the India TB dataset.
--   Code echo is turned off in all code chuncks so that the finished product hides the source code, showing only the output.
+-   The example uses the motorcycle accidents dataset from Colombia, but you should use the India TB dataset.
+-   Code echo is turned off in all code chunks so that the finished product hides the source code, showing only the output.
 
 ------------------------------------------------------------------------
 
