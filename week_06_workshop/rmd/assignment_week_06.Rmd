@@ -1,5 +1,5 @@
 ---
-title: "Workshop 5: Transforming, selecting, filtering, and plotting"
+title: "Workshop: Transforming, selecting, filtering, and plotting"
 output:
   prettydoc::html_pretty:
     theme: architect
