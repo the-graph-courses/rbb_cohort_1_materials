@@ -155,4 +155,38 @@ values of your categorical variable.
 
 # Wrap up
 
-That's it for this assignment! Check instructions for submission details. 
+That's it for this assignment! We will choose 2-3 people to present your work during the workshop. If you would like to share your results with the class, please let an instructor know.
+
+# Bonus challenge (optional)
+
+Finished early? Try some new manipulations with `mutate()` below. 
+
+## Replace values in a selected column
+
+```{r}
+# Example: replace values in the sex column
+obesity_data_cleaned %>% mutate(sex = str_replace(sex, "M", "Male"),
+                                sex = str_replace(sex, "F", "Female"))
+```
+
+Now perform a similar transformation on the `status` variable, to change "Aldulte" and "Enfant" to "Adult" and "Child".
+```{r}
+obesity_data_cleaned <- "WRITE_YOUR_CODE_HERE"
+```
+
+## Replace using dplyr mutate_if()
+
+We can use `mutate_if()` to update the column values conditionally. The following example applies the `toupper()` function to all factor variables. 
+```{r}
+# Example: turn all text variables to ALL CAPS
+obesity_data_cleaned %>% mutate_if(is.factor, toupper)
+```
+Note: the `toupper()` function converts factor variables to character. If we wanted to change them back to factor, you can use `mutate_if()` again and apply `as.factor()` to all character variables. 
+
+Now perform a similar transformation to all numeric variables. You can apply the `round()` function to round the values to a set number of decimal places.
+
+Hint: this time you will need to add 3 arguments to `mutate_if()` - the condition, the function, and the number of decimal places.
+```{r}
+obesity_data_cleaned <- "WRITE_YOUR_CODE_HERE"
+```
+
