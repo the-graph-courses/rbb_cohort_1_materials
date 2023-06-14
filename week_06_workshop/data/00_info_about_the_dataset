@@ -14,7 +14,7 @@ https://zenodo.org/record/5516813#.Y2EDyS8w1pR
 - sex: male or female
 - status: adult (Adulte) or child (Enfant)
 - bmi: body mass index
-- sedentary_ap_s_day: sedentary physical activity (seconds/week)
+- sedentary_ap_s_day: sedentary behaviour (seconds/week)
 - light_ap_s_day: light physical activity (seconds/week)
 - mvpa_s_day: moderate to vigorous physical activity (seconds/week)
 - oms_recommendation: whether or not WHO recommendations for physical activity are being met (OMS stands for Organisation mondiale de la Santé, which is the French name for WHO)

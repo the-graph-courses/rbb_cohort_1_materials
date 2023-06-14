@@ -84,8 +84,7 @@ numeric columns, the text that used to be there as been replaced with
 ## **Step 2**: Convert the physical activity variables
 
 Currently, the variables of physical activity are in seconds per day.
-There are 3 types of physical activity variables: sedentary physical
-activity (`sedentary_ap_s_day`), light physical activity
+There are 3 types of physical activity variables: sedentary behavior (`sedentary_ap_s_day`), light physical activity
 (`light_ap_s_day`), and moderate to vigorous physical activity
 (`mvpa_s_day`). These variables are measured in seconds per day.
 However, the [WHO
