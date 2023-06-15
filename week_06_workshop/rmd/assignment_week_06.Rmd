@@ -157,9 +157,9 @@ values of your categorical variable.
 
 That's it for this assignment! We will choose 2-3 people to present your work during the workshop. If you would like to share your results with the class, please let an instructor know.
 
-# Bonus challenge (optional)
-
 Finished early? Try some new manipulations with `mutate()` below. 
+
+# Bonus challenge (optional)
 
 ## Replace values in a selected column
 
@@ -181,7 +181,7 @@ We can use `mutate_if()` to update the column values conditionally. The followin
 # Example: turn all text variables to ALL CAPS
 obesity_data_cleaned %>% mutate_if(is.factor, toupper)
 ```
-Note: the `toupper()` function converts factor variables to character. If we wanted to change them back to factor, you can use `mutate_if()` again and apply `as.factor()` to all character variables. 
+Note: the `str_replace()` and `toupper()` functions convert factor variables to character. If we wanted to change them back to factor, you can use `mutate_if()` again and apply `as.factor()` to those variables.
 
 Now perform a similar transformation to all numeric variables. You can apply the `round()` function to round the values to a set number of decimal places.
 
