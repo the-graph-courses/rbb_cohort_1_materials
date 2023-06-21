@@ -1,0 +1,183 @@
+---
+title: "Workshop 7: Grouping, Summarizing and Plotting"
+output:
+  prettydoc::html_pretty:
+    theme: architect
+    toc: true
+    number_sections: true
+author: "Author's name here"
+date: "2023-06-21"
+editor_options: 
+  chunk_output_type: inline
+  markdown: 
+    wrap: 72
+---
+
+```{r include = FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+# Load packages and data
+
+To get started, **load in the needed packages**: {tidyverse}, {here},
+{janitor}, and {esquisse}.
+
+```{r}
+pacman::p_load(tidyverse, esquisse, here, janitor)
+```
+
+Now, **read the dataset into R**. The data frame you import should have
+880 rows and 22 columns. Remember to use the `here()` function to allow
+your Rmd to use project-relative paths.
+
+```{r}
+# Load dataset
+"WRITE_YOUR_CODE_HERE"
+```
+
+The column names in this CSV have spaces in them, which is not
+R-friendly. I would recommend using `janitor::clean_names()` to give
+your variable names a clean and consistent format.
+
+```{r}
+# Clean variable names
+tb_renamed <- "WRITE_YOUR_CODE_HERE"
+
+```
+
+**Checkpoint**: The dataframe should contain 880 rows and 21 columns
+(see Environment tab). Column/variable names should be all lowercase
+with no spaces. You can run `names(tb_renamed)` to print the variable
+names.
+
+# Investigating healthcare costs
+
+## Step 1: Calculate a `total_cost` variable
+
+There were three visits for the participants and each had a cost
+(`first_visit_cost, second_visit_cost, third_visit_cost`). Add together
+these costs to create a `total_cost` variable.
+
+```{r}
+tb_clean1 <- "WRITE_YOUR_CODE_HERE"
+```
+
+## Step 2: Summarize costs by group
+
+Let's look at the costs by the sex of patients. Use `dplyr` verbs to
+group by sex and summarize the median total cost.
+
+```{r}
+"WRITE_YOUR_CODE_HERE"
+
+```
+
+Next, summarize the mean cost of the first visit, for each first visit
+location.
+
+```{r}
+"WRITE_YOUR_CODE_HERE"
+
+```
+
+## Step 3: Categorize total costs
+
+Now we will create a `total_cost_categories` variable that reflects the
+following classifications:
+
+-   If the total cost is 0: the category is `free`.
+
+-   If the total cost is less than 500: the category is `low`.
+
+-   If the total cost is between 500 and 1000: the category is `medium`.
+
+-   If the total cost is between 1000 and 3000: the category is `high`.
+
+-   If the total cost is more than 3000: the total cost is `very high`.
+
+(These are arbitrary definitions based on a quick review of the
+distribution.)
+
+```{r}
+tb_clean2 <- "WRITE_YOUR_CODE_HERE"
+```
+
+# Encoding age groups
+
+## Step 1: Create an `age_group` variable
+
+The `age` variable records the age of each patient in years. For further
+manipulations, we want to classify the patients into 4 equally-sized age
+groups (i.e., the number of patients in each age group should be
+approximately the same).
+
+In order to determine what the age range for each age group should be,
+we can use the `quantile()` function.
+
+```{r}
+quantile(tb_clean2$age)
+```
+
+We will now choose cutoffs for each age group based on these values.
+
+**Create a new `age_group` variable with the following categories:**
+
+-   18-36
+
+-   37-47
+
+-   48-57
+
+-   58+
+
+```{r}
+tb_clean3 <- "WRITE_YOUR_CODE_HERE"
+
+```
+
+Now we can create a table of the `age_group` variable to see if we met
+our goal of having a similar number of patients in each age group:
+
+```{r}
+# Tabulate age groups
+tb_clean3 %>% tabyl(age_group)
+```
+
+**Checkpoint**: The if you classified the age groups correctly, you will
+see that each age group has 24-36% of the patients.
+
+## Step 2: Summarize costs by age and sex
+
+Now we will summarize costs by again, but this time use "nested"
+grouping to grou the data by two variables: `age_group` and `sex`.
+
+```{r}
+"WRITE_YOUR_CODE_HERE"
+
+```
+
+# Visualize data with {esquisse}
+
+## **Plot 1**: Create a plot for the participants, by smoking habit
+
+Using `esquisse`, keep only respondents who smoke and plot their average
+total cost by age group. Make sure to choose an appropriate plot!
+
+```{r}
+"PASTE_THE_ESQUISSE_CODE_HERE"
+```
+
+## **Plot 2**: Total costs and Treatment initiation delay
+
+Using `esquisse`, create a scatter plot of the treatment initiation
+delay vs. the total costs, for all participants.
+
+```{r}
+"PASTE_THE_ESQUISSE_CODE_HERE"
+```
+
+# Wrap up
+
+That's it for this assignment! We will choose 2-3 people to present your
+work during the workshop. If you would like to share your results with
+the class, please let an instructor know.
