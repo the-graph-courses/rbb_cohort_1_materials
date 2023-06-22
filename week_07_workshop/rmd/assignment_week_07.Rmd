@@ -23,7 +23,7 @@ To get started, **load in the needed packages**: {tidyverse}, {here},
 {janitor}, and {esquisse}.
 
 ```{r}
-pacman::p_load(tidyverse, esquisse, here, janitor)
+"WRITE_YOUR_CODE_HERE"
 ```
 
 Now, **read the dataset into R**. The data frame you import should have
@@ -144,12 +144,12 @@ tb_clean3 %>% tabyl(age_group)
 ```
 
 **Checkpoint**: The if you classified the age groups correctly, you will
-see that each age group has 24-36% of the patients.
+see that each age group has 24-26% of the patients.
 
 ## Step 2: Summarize costs by age and sex
 
-Now we will summarize costs by again, but this time use "nested"
-grouping to grou the data by two variables: `age_group` and `sex`.
+Now we will summarize costs by mean, but this time use "nested"
+grouping to group the data by two variables: `age_group` and `sex`.
 
 ```{r}
 "WRITE_YOUR_CODE_HERE"
@@ -160,8 +160,7 @@ grouping to grou the data by two variables: `age_group` and `sex`.
 
 ## **Plot 1**: Create a plot for the participants, by smoking habit
 
-Using `esquisse`, keep only respondents who smoke and plot their average
-total cost by age group. Make sure to choose an appropriate plot!
+Create a plot of average total cost by age group, keeping only respondents who are smokers. You will first need to create a summary table and use that in esquisse. Make sure to choose an appropriate plot!
 
 ```{r}
 "PASTE_THE_ESQUISSE_CODE_HERE"
@@ -170,7 +169,7 @@ total cost by age group. Make sure to choose an appropriate plot!
 ## **Plot 2**: Total costs and Treatment initiation delay
 
 Using `esquisse`, create a scatter plot of the treatment initiation
-delay vs. the total costs, for all participants.
+delay vs. the total costs, for all participants. Color the point by a categorical variable (Hint: drag a variable into the "Color" box).
 
 ```{r}
 "PASTE_THE_ESQUISSE_CODE_HERE"
@@ -181,3 +180,5 @@ delay vs. the total costs, for all participants.
 That's it for this assignment! We will choose 2-3 people to present your
 work during the workshop. If you would like to share your results with
 the class, please let an instructor know.
+
+If you finish early, see the instructor for bonus manipulations you can do with this dataset. 
