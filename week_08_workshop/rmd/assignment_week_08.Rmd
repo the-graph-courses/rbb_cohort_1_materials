@@ -106,7 +106,7 @@ diet_long <-
 With this new dataset, we now have one row for each household-week.
 
 To learn more about this kind of advanced pivot, we have prepared a short written lesson here: 
-https://the-graph-courses.github.io/data_untangled_wp/lessons/ls08_advanced_pivoting.html
+https://the-graph-courses.github.io/data_untangled_wp/lessons/ls08_advanced_pivoting.html. You can review it in your own time.
 
 ### 2.2 Basic data analysis with a long format dataset
 
