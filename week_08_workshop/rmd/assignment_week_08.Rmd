@@ -8,7 +8,7 @@ output:
 author: "Author's name here"
 date: "2023-06-28"
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
   markdown: 
     wrap: 72
 ---
@@ -41,13 +41,10 @@ Although the variables are consistently named, notice that there are [no
 neat separators]{.underline}. This will be important in later steps of
 the assignment so keep this detail in mind.
 
-
-
 # 1 More Practice Using `dplyr` Verbs!
 
 NOTE: Keep in mind that the raw dataset is in a WIDE format while you
 complete Exercise 1.
-
 
 ## Exercise 1: Dietary Intake of Households
 
@@ -64,82 +61,90 @@ diet_clean1 <- diet_raw %>% "WRITE_YOUR_CODE_HERE"
 **Checkpoint:** The original dataset had 9 columns. You should now have a total of 13 columns in your dataset! Note that the number of rows should remain unchanged.
 
 ### 1.2
+
 Determine which 2 households which had the highest fat intake. HINT: Consider the `arrange()` function.
 
 ```{r}
 diet_clean2 <- diet_clean1 %>% "WRITE_YOUR_CODE_HERE"
 ```
 
-#### 1.3
-For each of the 2 households, what are the corresponding mean energy consumption? 
-```{r}
-diet_clean3 <- diet_clean2 %>%  "WRITE_YOUR_CODE_HERE"
-```
-
+Household ID 1: 
+Household ID 2:
 
 # 2 Pivoting the Dataset
 
 ## Exercise 2: Wide to Long format
 
-Although basic data analysis tasks such as finding the mean, etc. are
-possible on wide format datasets, the codes are often longer and involve
-more manipulation.
+We will now pivot the raw data frame into a long format using the `pivot_longer()`
+function. This will be a more complex pivot than you are used to, so we will guide you here.
 
-Long format datasets are optimal for a majority of data analysis tasks.
-
-Pivot the raw data frame into a long format using the `pivot_longer()`
-function. Assign appropriate names to describe what variables contain
-using the `names_to()` and `values_to()` arguments.
-
-But first! Recall that there are no neat separators for variable names. Think about how you
-would make one to pivot the data frame into a long format.
-
-HINT: Consider the `rename()` function of {dplyr}.
+Let's start by renaming the variables to include a neat separator:
 
 ### 2.1
 ```{r eval = F}
-#Rename variable using the rename function
-diet_raw_renamed <- diet_raw %>% "WRITE_YOUR_CODE_HERE"
+# Rename variable using the rename function
+diet_raw_renamed <- 
+  diet_raw %>% 
+  rename(enerc_kcal__w_1 = enerc_kcal_w_1, 
+         enerc_kcal__w_2 = enerc_kcal_w_2,
+         dry__w_1 = dry_w_1,
+         dry__w_2 = dry_w_2,
+         water__w_1 = water_w_1,
+         water__w_2 = water_w_2,
+         fat__w_1 = fat_w_1,
+         fat__w_2 = fat_w_2)
 ```
+
+With these new renamings, we now have a unique symbol `__` that separates our variable types (fat, water, dry...) from the variable weeks.
+
+We can now perform a complex pivot:
 
 ```{r}
 # Pivot into a long data frame
-diet_long <- diet_raw_named %>% "WRITE_YOUR_CODE_HERE"
+diet_long <- 
+  diet_raw_renamed %>% 
+  pivot_longer(cols = 2:9, 
+               names_sep = "__", 
+               names_to = c(".value", "week"))
 ```
 
-**Checkpoint:** After pivoting the data frame, notice that the number of observations and variables have changed! You should now have a 488 observations and 4 variables.
+With this new dataset, we now have one row for each household-week.
+
+To learn more about this kind of advanced pivot, we have prepared a short written lesson here: 
+https://the-graph-courses.github.io/data_untangled_wp/lessons/ls08_advanced_pivoting.html
 
 ### 2.2 Basic data analysis with a long format dataset
 
-What are the median and median values for each observed variable: 
-  - Energy content of food
-  - Dry content of food
-  - Water content of food 
-  - Fat content of food 
+Now, for each household, we would like to calculate the following: 
+
+  - Average energy content of food
+  - Average dry content of food
+  - Average water content of food 
+  - Average fat content of food 
+  
+Use the `group_by()` function to group by household and the `summarise()` function to obtain these summary statistics.
 
 ```{r}
-sum_diet_long <- diet_long %>% "WRITE_YOUR_CODE_HERE"
+summary_diet_long <- diet_long %>% "WRITE_YOUR_CODE_HERE"
+```
+
+HINT. Your code should look like this:
+
+```{r eval = F}
+diet_long %>% 
+  GROUPING_FUNCTION_HERE(household_id) %>% 
+  SUMMARY_FUNCTION_HERE(mean_enerc_kcal = mean(enerc_kcal),
+                        ...)
 ```
 
 
 ### 2.3 Visualize data with {esquisse}
 
 Using `esquisse`, plot the mean energy content vs. mean fat content of food consumed for all households.
+
 ```{r}
 "PASTE THE ESQUISSE CODE HERE"
 ```
-
-
-# Exercise: 3 Long to Wide format
-
-With the long data set you created in Exercise 2, pivot it back to a WIDE format dataset using the `pivot_wider` function alongside the `names_from` and `values_from` arguments.
-
-```{r}
-# Pivot into a wide data frame
-diet_raw_wide <- diet_long %>% "WRITE_YOUR_CODE_HERE"
-```
-
-
 
 # Wrap up
 
