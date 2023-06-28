@@ -36,11 +36,6 @@ your Rmd to use project-relative paths.
 diet_raw <- "WRITE_YOUR_CODE_HERE"
 ```
 
-**Checkpoint:** Pay close attention to variable names in the data frame!
-Although the variables are consistently named, notice that there are [no
-neat separators]{.underline}. This will be important in later steps of
-the assignment so keep this detail in mind.
-
 # 1 More Practice Using `dplyr` Verbs!
 
 NOTE: Keep in mind that the raw dataset is in a WIDE format while you
