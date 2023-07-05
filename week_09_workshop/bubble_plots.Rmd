@@ -255,8 +255,7 @@ gapminder_plot_06 <- ggplot(
   mapping = aes(
     x = gdp_per_capita,
     y = life_expectancy,
-    size = population,
-    color = continent
+    size = population
   )
 ) +
   geom_point(alpha = 0.5) +
