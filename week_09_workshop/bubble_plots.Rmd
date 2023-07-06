@@ -186,13 +186,7 @@ So let's add an additional variable, `population`, and map it to the
 size aesthetic.
 
 ```{r}
-gapminder_bubble <- ggplot(
-  data = gapminder07,
-  mapping = aes(
-    x = gdp_per_capita,
-    y = life_expectancy,
-    size = population)) +
-  geom_point()
+gapminder_bubble <-  "WRITE_YOUR_CODE_HERE"
 
 gapminder_bubble
 ```
@@ -297,3 +291,14 @@ two additional `aes`thetic mappings.
 
 We built upon the simple scatterplot by adding variable colors and
 sizes: ![](images/ggplot_intro2.png){width="509"}
+
+## Bonus Challenge (optional)
+
+Our current bubble plot doesn't show us which country each bubble is
+from, or what the exact population and GDP of the country is. One way to
+communicate this information without crowding the graph is to make it
+interactive. The `ggplotly()` function from the {plotly} package can
+convert your plot to be interactive! Your challenge for this section is
+to find out how to use this function to make your plot interactive, so
+that you can hover over the points to see additional information. Good
+luck!
