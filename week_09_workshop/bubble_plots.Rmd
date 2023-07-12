@@ -237,9 +237,7 @@ gapminder_plot_04
 
 ## Log transform scales
 
-(Add that section from line graphs lesson and adapt it to this data.)
-
-We can address this by log-transforming the y-axis using
+We can address this by log-transforming the x-axis using
 `scale_x_log10()`, which log-scales the x-axis (as the name suggests).
 We will add this function as a new layer after a `+` sign, as usual:
 
