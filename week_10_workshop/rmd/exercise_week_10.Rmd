@@ -14,11 +14,7 @@ editor_options:
 ---
 
 ```{r include = FALSE}
-knitr::opts_chunk$set(echo = FALSE)
-
-# Load packages 
 if(!require(pacman)) install.packages("pacman")
-pacman::p_load(tidyverse, scales, lubridate, here)
 ```
 
 # Download the data
