@@ -160,7 +160,13 @@ Choose AT LEAST ONE of the following plot extensions to apply to your
     dashboard](https://epigraphhub.org/superset/dashboard/11). Create a
     compound plot with patchwork package or cowplot package that
     contains these two plots.
--   **Rolling averages.** The current graph shows daily counts directly from the data. We can also plot 7-day rolling averages to smooth out the bumpiness in daily counts. This is often the format used in time-series plots of epidemic data. Plot a weekly rolling average on your graph by following this [tutorial](https://www.storybench.org/how-to-calculate-a-rolling-average-in-r) (or using ChatGPT).
+-   **Rolling averages.** The current graph shows daily counts directly
+    from the data. We can also plot 7-day rolling averages to smooth out
+    the bumpiness in daily counts. This is often the format used in
+    time-series plots of epidemic data. Plot a weekly rolling average on
+    your graph by following this
+    [tutorial](https://www.storybench.org/how-to-calculate-a-rolling-average-in-r)
+    (or using ChatGPT).
 
 # Presentations
 
