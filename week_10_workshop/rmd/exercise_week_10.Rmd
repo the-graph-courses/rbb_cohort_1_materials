@@ -1,5 +1,5 @@
 ---
-title: "Workshop 10: ggplot scales, themes, and color palettes"
+title: "Workshop 10: ggplot scales and themes"
 output:
   prettydoc::html_pretty:
     theme: architect
@@ -154,17 +154,17 @@ Choose AT LEAST ONE of the following plot extensions to apply to your
     to the two highest counts on the plot by following the "Add labels
     for a selection of marker" tutorial
     [here](https://r-graph-gallery.com/275-add-text-labels-with-ggplot2.html).
--   **Compound plot with total counts.** Create a smaller plot that
-    shows the total counts across all four cantons, similar to the small
-    light blue plots under the main plots on the [epigraphhub
+-   **Compound plot with total counts.** Plot linegraph that shows the
+    total counts across all cantons, similar to the small light blue
+    plots under the main plots on the [EpiGraphHub
     dashboard](https://epigraphhub.org/superset/dashboard/11). Make a
     compound plot with patchwork package or cowplot package that
     contains these two plots.
 -   **Rolling averages.** The current graph shows daily counts directly
-    from the data. We can also plotting the 7-day rolling averages to
-    smooth out the bumpiness in the daily counts. This is ofter the
-    format used in time-series plots of epidemic dat. Plot a weekly
-    rolling average on your graph by following this
+    from the data. We can also plot 7-day rolling averages to smooth out
+    the bumpiness in daily counts. This is often the format used in
+    time-series plots of epidemic data. Plot a weekly rolling average on
+    your graph by following this
     [tutorial](https://www.storybench.org/how-to-calculate-a-rolling-average-in-r)
     (or using ChatGPT).
 
