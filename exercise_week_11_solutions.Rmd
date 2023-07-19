@@ -1,0 +1,209 @@
+---
+title: "Week 11: Comparing distributions in ggplot2"
+subtitle: "Position adjustments with DHS data"
+author: "GRAPH Courses Team"
+date: "July 18, 2023"
+output: prettydoc::html_pretty
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r echo = F}
+knitr::opts_chunk$set(warning = F, message = F)
+```
+
+```{r}
+# Load packages
+pacman::p_load(
+  janitor, # data analysis utilities
+  here, # force rmds to use the project folder as working directory
+  haven, # for reading in stata files
+  tidyverse # for everything!
+)
+```
+
+- in addition to the vars selected in the demo (basic and fertility) add lit and media vars, malaria knowledge vars (tell them the codes)
+
+```{r}
+# Reading in the .dta file
+ir_ng_18_raw <- 
+  haven::read_dta(here("data/NGIR7BFL_mini.DTA"),
+                  col_select = c(
+                    # basic information
+                    v006, v007, v009, v010, v012, v013, v022, v024, v025, v106, v130, v190,                     # literacy and media
+                    v155, v156, v157, v158, v159, 
+                    # fertility and reproductive timing
+                    v201, v212, v213, v511, v531, 
+                    # malaria knowledge
+                    s1108ai, s1108ba, s1108bc, s1108bd, s1108bf))
+```
+
+- ask them to rename to give reasonable short descriptive names (look up pdf for dictionary, malaria vars on 225-226)
+
+```{r}
+# Renaming the variables
+ir_ng_18_renamed <- 
+  ir_ng_18_raw %>% 
+  rename(mth_interview = v006,
+         yr_interview = v007,
+         mth_birth = v009,
+         yr_birth = v010,
+         age = v012,
+         age_group = v013,
+         state = v022,
+         region = v024,
+         urban_rural = v025,
+         highest_educ = v106,
+         religion = v130,
+         literacy = v155,
+         lit_program = v156,
+         news_mag = v157,
+         radio = v158,
+         tv = v159,
+         wealth_index = v190,
+         num_kids = v201,
+         age_first_birth = v212,
+         curr_pregnant = v213,
+         age_first_cohabitation = v511,
+         age_first_sex = v531,
+         m_curable = s1108ai,
+         m_deadly = s1108ba,
+         m_no_worry = s1108bc,
+         m_know_sick = s1108bd,
+         m_weak_child_only = s1108bf)
+```
+
+- convert
+
+```{r}
+ir_ng_18_clean <- 
+  ir_ng_18_renamed %>% 
+  # convert from labelled data to regular factors
+  haven::as_factor() 
+```
+
+## Comparing distributions
+
+# Stacked histogram with 
+
+1) base
+- geom_bar of some categorical var (lit, educ, religion, or malaria qs)
+- change some aesthetics and labels
+- add default theme
+
+```{r}
+
+```
+
+2) position
+- fill with a different categorical var (pref one with <4 categories for better readability)
+
+
+
+
+
+```{r malaria}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## Malaria ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ggplot(data = ir_ng_18_clean,
+  mapping = aes(x = age, fill = m_curable)) +
+  geom_bar(position = "fill")
+
+
+
+ggplot(data = ir_ng_18_clean,
+  mapping = aes(x = m_deadly, fill = urban_rural)) +
+  geom_bar(position = "fill")
+
+ggplot(data = ir_ng_18_clean,
+  mapping = aes(x = urban_rural, fill = m_curable)) +
+  geom_bar(position = "fill")
+
+ggplot(data = ir_ng_18_clean,
+  mapping = aes(x = literacy, fill = m_curable)) +
+  geom_bar(position = "dodge")
+
+ggplot(data = ir_ng_18_clean,
+  mapping = aes(x = highest_educ, fill = m_curable)) +
+  geom_bar(position = "dodge")
+
+ggplot(data = ir_ng_18_clean,
+  mapping = aes(x = highest_educ, fill = m_curable)) +
+  geom_bar(position = "fill")
+
+ggplot(data = ir_ng_18_clean,
+  mapping = aes(x = highest_educ, fill = m_weak_child_only)) +
+  geom_bar(position = "fill")
+
+ggplot(data = ir_ng_18_clean,
+  mapping = aes(x = wealth_index, fill = m_know_sick)) +
+  geom_bar(position = "dodge")
+
+ggplot(data = ir_ng_18_clean,
+  mapping = aes(x = wealth_index, fill = m_no_worry)) +
+  geom_bar(position = "dodge")
+
+ggplot(data = ir_ng_18_clean,
+  mapping = aes(x = literacy, fill = m_no_worry)) +
+  geom_bar(position = "dodge")
+
+ggplot(data = ir_ng_18_clean,
+  mapping = aes(x = m_curable, fill = highest_educ)) +
+  geom_bar(position = "fill")
+
+ggplot(data = ir_ng_18_clean,
+  mapping = aes(x = m_curable, fill = highest_educ)) +
+  geom_bar(position = "dodge")
+
+
+ggplot(data = ir_ng_18_clean,
+  mapping = aes(x = highest_educ , fill = m_curable)) +
+  geom_bar(position = "dodge")
+
+ggplot(data = ir_ng_18_clean,
+  mapping = aes(x = m_weak_child_only, fill = highest_educ)) +
+  geom_bar(position = "fill")
+
+
+ggplot(data = ir,
+  mapping = aes(x = educ, fill = urban_rural)) +
+  geom_bar(position = "dodge") +
+  facet_wrap(~wealth_index)
+
+ggplot(data = ir,
+  mapping = aes(x = wealth_index, fill = urban_rural)) +
+  geom_bar(position = "dodge")
+
+
+## Fertility
+
+# histogram age first birth
+
+ggplot(ir_ng_18_clean, aes(age_first_birth)) +
+  geom_histogram(bins = 25, color = "white", fill = "pink") +
+  facet_wrap(~urban_rural)
+
+ggplot(ir_ng_18_clean, aes(age_first_birth, fill = highest_educ)) +
+  geom_histogram(bins = 25, color = "white")
+
+ggplot(ir_ng_18_clean, aes(m_curable, fill = m_curable)) +
+  geom_bar(color = "white") +
+  theme_classic()
+
+ggplot(ir_ng_18_clean, aes(m_curable, fill = m_curable)) +
+  geom_bar(color = "white") +
+  facet_grid(urban_rural~highest_educ)
+
+
+ggplot(ir_ng_18_clean, aes(age_first_birth, fill = urban_rural)) +  
+  geom_histogram(bins = 15, color = "white")
+
+ggplot(ir_ng_18_clean, aes(age_first_birth, fill = urban_rural)) +  
+  geom_histogram(bins = 15, color = "white", position = "dodge")
+
+ggplot(ir_ng_18_clean, aes(age_first_birth, fill = urban_rural)) +  
+  geom_density(alpha = 0.5)
+```
+

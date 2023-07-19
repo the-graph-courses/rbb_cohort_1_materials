@@ -1,0 +1,109 @@
+---
+title: "Week 11: Exploring Distribution Comparisons with ggplot2"
+subtitle: "Implementing Position Adjustments Using DHS Data"
+author: "GRAPH Courses Team"
+date: "July 18, 2023"
+output: prettydoc::html_pretty
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, echo = FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+```{r}
+# Load necessary packages
+pacman::p_load(
+  janitor,    # for data analysis utilities
+  here,       # to set the working directory
+  haven,      # for reading Stata files
+  tidyverse   # for data manipulation and visualization
+)
+```
+
+# Data Importation
+
+The given code chunk imports the same variables as presented in the demo. However, we want to augment this by adding five variables related to malaria-knowledge. 
+
+Scan through the data dictionary file and determine which five variables correspond to the following agreement statements:
+
+- Malaria can be fully cured by medicine
+- Malaria can lead to death
+- No worry about malaria due to easy treatment
+- Know people sick with malaria
+- Only weak children can die from malaria
+
+Then, incorporate these variables into the data import code below.
+
+```{r}
+# Import the .dta file
+ir_ng_18_raw <- 
+  haven::read_dta(here("data/NGIR7BFL_mini.DTA"),
+                  col_select = c(
+                    # Basic information
+                    v006, v007, v009, v010, v012, v013, 
+                    v022, v024, v025, v106, v130, v190,                     
+                    
+                    # Literacy and media
+                    v155, v156, v157, v158, v159, 
+                    
+                    # Fertility and reproductive timing
+                    v201, v212, v213, v511, v531
+                    
+                    # Add the identified malaria knowledge variables here
+                    
+                    ))
+```
+
+# Variable Renaming
+
+Assign descriptive names to the newly imported variables and then execute the code below.
+
+```{r}
+# Rename the variables
+ir_ng_18_renamed <- 
+  ir_ng_18_raw %>% 
+  rename(age = v012,
+         age_group = v013,
+         state = v022,
+         region = v024,
+         urban_rural = v025,
+         highest_educ = v106,
+         religion = v130,
+         literacy = v155,
+         wealth_index = v190,
+         num_kids = v201,
+         age_first_birth = v212,
+         age_first_cohabitation = v511,
+         age_first_sex = v531
+         # Rename the malaria knowledge variables here
+         
+         )
+```
+
+# Data Transformation
+
+With the suitable function from the `haven` package, transform all variables into regular R factors.
+
+```{r}
+ir_ng_18_clean <- 
+  ir_ng_18_renamed 
+  # Insert function here to convert from labelled data to regular factors
+```
+
+# Comparison of Distributions via Plots
+
+## Histograms with Continuous Variables (position = "fill")
+
+a. Choose one of the continuous variables from the dataset: age, num_kids, age_first_sex, age_first_cohabitation or age_first_birth. Then, generate a simple histogram of this variable. Make sure to provide the necessary labels. 
+
+b. Now, incorporate the `fill` aesthetic, `aes(..., fill = malaria_variable)`, with `position = "fill"` within the histogram function to create a stacked histogram. This graph should show how the responses to this question differ at the various levels of the chosen continuous variable.
+
+## Bar Plots with Categorical Variables (position = "dodge")
+
+a. Select one of the categorical variables from the dataset: state, region, urban_rural, highest_educ, religion, literacy, wealth_index. Proceed to generate a simple bar plot to display the distribution of this variable. Ensure to provide the required labels. 
+
+b. Next, add the `fill` aesthetic, `aes(fill = malaria_variable)`, with `position = "dodge"` within the bar plot function to generate a dodged bar plot. This graph should illustrate how the answers to the malaria knowledge question change at the different levels of the chosen categorical variable.
+
+# 
