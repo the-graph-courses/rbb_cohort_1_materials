@@ -16,13 +16,17 @@ knitr::opts_chunk$set(warning = F, message = F)
 
 The Demographic and Health Surveys (DHS) are a series of standardized surveys conducted periodically in developing countries that collect data on various aspects of population, health, and nutrition. These surveys are a gold-standard source of reliable public health data for many countries and international bodies. You will be using DHS data for the final project of this course, so this is a chance to practice working with this type of data.
 
+<<<<<<< HEAD
 Several datasets (called recodes) are made available from each survey, including a household recode, men's recode and the women's recode (sometimes called the individual recode). This ***individual recode*** dataset contains individual-level data on women aged 15 to 49 in the surveyed households. This is what you will use for this workshop and for your final projects.
+=======
+Several datasets (called recodes) are made available from each survey, including a household recode, men\'s recode and the women\'s recode (sometimes called the individual recode). This ***individual recode*** dataset contains individual-level data on women aged 15 to 49 in the surveyed households. This is what you will use for this workshop and for your final projects.
+>>>>>>> 202e2e534fcc3383de94ea891ba3b15d7a8ace8d
 
 Today we will be looking at individual recode (IR) data from **Nigeria (2018)**.
 
 ### Load packages and importing data
 
-The dataset from DHS comes in the form of a **.DTA file** (the main data file in STATA format). If you look in your "data" folder of this workshop, you will see a file named NGIR7BFL_mini.DTA, which contains the IR data we want to use.
+The dataset from DHS comes in the form of a **.DTA file** (the main data file in STATA format). If you look in your "data" folder of this workshop, you will see a file named NGIR7BFL_mini.DTA, which contains the IR data we want to use. 
 
 To import the DHS dataset from the .DTA format into R, you should use the `read_dta()` function from the {haven} package.
 
@@ -58,6 +62,7 @@ ir_raw <-
 
 Since the DHS variable names are not very descriptive (like v000 and v001), we will use `rename()` to give them short, descriptive titles.
 
+
 ```{r}
 # Renaming the variables
 ir_renamed <- 
@@ -82,6 +87,7 @@ ir_renamed <-
 ```
 
 Another note on importing data: the `read_dta()` function reads in factor data as a special data type called **labelled** data.
+
 
 ```{r}
 # Review data types
@@ -112,11 +118,14 @@ glimpse(ir_clean)
 
 ## Distributions with histograms and barplots
 
+
 ```{r}
 # histogram age first birth
 ggplot(ir_clean, aes(age_first_birth)) +
+
   geom_histogram(bins = 25, color = "white", fill = "pink") 
 ```
+
 
 ## Comparing distributions
 
@@ -130,8 +139,11 @@ ggplot(ir_clean, aes(age_first_birth, fill = highest_educ)) +
   geom_histogram(bins = 25, color = "white")
 ```
 
+
 ## Position adjustments
 
 You can change the position adjustment within `geom_histogram()`.
 
+<<<<<<< HEAD
 Possible values for the argument **position** in `geom_histogram()` are `“identity”`, `“stack”`, `“dodge”`. Default value is `“stack”`.
+
