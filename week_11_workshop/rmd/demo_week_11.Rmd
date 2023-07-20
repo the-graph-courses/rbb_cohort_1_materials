@@ -135,6 +135,10 @@ ggplot(ir_clean,
 
 ## Position adjustments
 
+![](images/gg_min_build_positions.png){width="634"}
+
+### Histograms
+
 You can change the position adjustment within `geom_histogram()`.
 
 Possible values for the argument **position** in `geom_histogram()` are `“identity”`, `“stack”`, `“dodge”`, and `"fill"`. Default value is `“stack”`.
@@ -149,11 +153,15 @@ ggplot(ir_clean,
     position = "dodge") 
 ```
 
+### Barplots
+
+Like histograms, bar plots also visualize distributions, but for categorical variables. 
+
 ```{r}
 # percent stacked bar plot of education
 ggplot(ir_clean, 
   aes(highest_educ,
     fill = urban_rural)) +
   geom_bar(position = "fill") +
-  theme_classic()
+  theme_classic() # built-in ggplot theme
 ```
