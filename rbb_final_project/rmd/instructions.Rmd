@@ -31,13 +31,31 @@ A typical approach for the report structure is to select a principal variable, t
 
 To submit, you should upload a zip folder with two files---your Rmarkdown and your knitted HTML/PDF/DOCX file---to the assignment page.
 
-Those are the instructions in a nutshell. The rest of this document consists of recommended analysis steps and a set of optional appendices.
+Those are the instructions in a nutshell! The rest of this document consists of the grading rubric, some recommended analysis steps and a set of optional appendices.
 
-# **Step 1: Obtain the women's recode file for a specific country**
+# **Grading Rubric**
 
-DHS data is normally obtained by request from the DHS website [here](https://dhsprogram.com/data/new-user-registration.cfm){target="_blank"}.
+As you work on your analysis, you should keep in mind the following rubric against which your work will be graded.
 
-However, to speed you up, we have already requested and compiled the data you will need: the latest women's recode datasets for most countries surveyed since 2003. **You should select a survey to analyze from this collection. To access these files, follow this Google Drive [link](https://drive.google.com/drive/folders/1J0gw4qpfbB8bYFbXx8QcsQEWgJSVwp_P?usp=share_link){target="_blank"}.** 
+-   **Data wrangling (35%)**
+
+Demonstrate that you have used appropriate data wrangling techniques to prepare the data for analysis. In particular, we recommend that you use at least four of the eight dplyr functions covered in the data wrangling chapter (`select()`, `filter()`, `mutate()`, `case_when()`, `group_by()`, `summarize()`, `pivot_wider()` and `pivot_longer()`)
+
+-   **Quality of figures (35%)**
+
+Create at least four ggplot-based figures that are clear, informative, and aesthetically pleasing. Include appropriate titles and labels for your figures.
+
+-   **Use of Rmarkdown (20%)**
+
+Demonstrate that you can use R Markdown to create a professional document. This entails using appropriate formatting and Rmarkdown features such as inline code.
+
+-   **Syntax and code formatting (10%)**
+
+Use clean, well-organized code that is easy to read and understand. This includes using appropriate indentation, commenting your code, and using clear, descriptive variable names.
+
+# **Analysis step 1: Obtain the women's recode file for a specific country**
+
+DHS data is normally obtained by request from the DHS website [here](https://dhsprogram.com/data/new-user-registration.cfm){target="_blank"}. However, to speed you up, we have already requested and compiled the data you will need: the latest women's recode datasets for most countries surveyed since 2003. **You should select a survey to analyze from this collection. To access these files, follow this Google Drive [link](https://drive.google.com/drive/folders/1J0gw4qpfbB8bYFbXx8QcsQEWgJSVwp_P?usp=share_link){target="_blank"}.** 
 
 Once you have downloaded and unzipped the folder, you will see that it contains several different file types:
 
@@ -47,7 +65,7 @@ The only two files you need are the .DTA file (which is the main survey data fil
 
 Create a new RStudio project for your analysis and place these two files in the "data" subfolder of your project.
 
-# **Step 2: Import your dataset into R**
+# **Analysis step 2: Import your dataset into R**
 
 To import the DHS dataset from the .DTA format into R, you should use the `read_dta()` function from the {haven} package.
 
@@ -84,7 +102,7 @@ ir_converted <-
   haven::as_factor() # pass the data frame to as_factor()
 ```
 
-# **Step 3: Identify and analyze the relevant variables**
+# **Analysis step 3: Identify and analyze the relevant variables**
 
 To find variables relevant to your chosen topic, there are a few resources that could be of help:
 
@@ -125,27 +143,7 @@ Once your work is done, to submit it you should:
 
 To help get a sense of what other students in the past have created, you can view past student work [here](https://minhaskamal.github.io/DownGit/#/home?url=https://github.com/the-graph-courses/rbb_cohort_1_materials/tree/main/rbb_final_project/sample_assignments){target="_blank"}
 
-# **Appendix 2: Grading Rubric**
-
-As you work on your analysis, you should keep in mind the following rubric against which your work will be graded.
-
--   **Data wrangling (35%)**
-
-Demonstrate that you have used appropriate data wrangling techniques to prepare the data for analysis. In particular, we recommend that you use at least four of the eight dplyr functions covered in the data wrangling chapter (`select()`, `filter()`, `mutate()`, `case_when()`, `group_by()`, `summarize()`, `pivot_wider()` and `pivot_longer()`)
-
--   **Quality of figures (35%)**
-
-Create at least four ggplot-based figures that are clear, informative, and aesthetically pleasing. Include appropriate titles and labels for your figures.
-
--   **Use of Rmarkdown (20%)**
-
-Demonstrate that you can use R Markdown to create a professional document. This includes using appropriate formatting, including headings and lists, and using Rmarkdown features such as inline code.
-
--   **Syntax and code formatting (10%)**
-
-Use clean, well-organized code that is easy to read and understand. This includes using appropriate indentation, commenting your code, and using clear, descriptive variable names.
-
-# **Appendix 3: Information about the DHS**
+# **Appendix 2: Information about the DHS**
 
 The Demographic and Health Surveys (DHS) are a series of standardized surveys conducted periodically in developing countries that collect data on various aspects of population, health, and nutrition. 
 
@@ -154,7 +152,7 @@ You can learn more about the DHS program and the various surveys they run by wat
 Finally, to see the kind of reports that are created from the DHS surveys, visit this [page](https://dhsprogram.com/publications/index.cfm){target="_blank"}.
 
 
-# **Appendix 4: Other FAQs**
+# **Appendix 3: Other FAQs**
 
 **My percentages and numbers differ slightly with those seen in the official DHS publications. What is going on?**
 
