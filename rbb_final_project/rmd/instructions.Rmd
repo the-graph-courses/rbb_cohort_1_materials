@@ -27,15 +27,11 @@ The report should:
 
 -   Include at least four ggplot2-based figures
 
-A typical approach for the report structure is to select a principal variable, then generate plots illustrating how that variable's distribution shifts in relation to other variables. For instance, one could analyze how contraceptive use varies among different segments of the population. Alternatively, you might examine how access to clean water differs across various socio-economic groups. There are hundreds of variables to choose from!
+A typical approach for the report structure is to select a principal variable, then generate plots showing how that variable's distribution changes in relation to other variables. For instance, one could analyze how contraceptive use varies among different segments of the population, or how access to clean water differs across various socio-economic groups. There are hundreds of variables to choose from!
 
-To submit, you should
+To submit, you should upload a zip folder with two files---your Rmarkdown and your knitted HTML/PDF/DOCX file---to the assignment page.
 
--   upload a zip folder with two files---your Rmarkdown and your knitted HTML/PDF/DOCX file---to the assignment page.
-
-Those are the instructions in a nutshell. 
-
-The rest of this document consists of recommended analysis steps and a set of optional appendices.
+Those are the instructions in a nutshell. The rest of this document consists of recommended analysis steps and a set of optional appendices.
 
 # **Step 1: Obtain the women's recode file for a specific country**
 
