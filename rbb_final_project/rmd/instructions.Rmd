@@ -43,7 +43,7 @@ Once you have downloaded and unzipped the folder, you will see that it contains 
 
 ![](images/dhs_file_types.jpg){width="500"}
 
-**The only two files you need are the .DTA file (which is the main survey data file in STATA format) and the .MAP file (the data dictionary).**
+The only two files you need are the .DTA file (which is the main survey data file in STATA format) and the .MAP file (the data dictionary).
 
 Create a new RStudio project for your analysis and place these two files in the "data" subfolder of your project.
 
@@ -96,13 +96,13 @@ To find variables relevant to your chosen topic, there are a few resources that 
     V002 Household number\
     V003 Respondent's line number
 
-As you can see, each line has the name of the variable and the variable's definition.
+    As you can see, each line has the name of the variable and the variable's definition.
 
-So, if you are working on a topic like HIV, you can simply search the .MAP file for the word "HIV", and you will be lead to the HIV-relevant variables.
+    So, if you are working on a topic like HIV, you can simply search the .MAP file for the word "HIV", and you will be lead to the HIV-relevant variables.
 
-2.    Sometimes the variable descriptions in the .MAP files are not detailed enough. In that case, you can search for specific variables in a DHS recode [manual](https://dhsprogram.com/pubs/pdf/DHSG4/Recode7_DHS_10Sep2018_DHSG4.pdf){target="_blank"}.
+2.  Sometimes the variable descriptions in the .MAP files are not detailed enough. In that case, you can search for specific variables in a DHS recode [manual](https://dhsprogram.com/pubs/pdf/DHSG4/Recode7_DHS_10Sep2018_DHSG4.pdf){target="_blank"}
 
-The recode manuals are similar to the MAP files, but they explain each variable in more detail.
+    The recode manuals are similar to the MAP files, but they explain each variable in more detail.
 
 3.  The DHS has also created an easily-navigable web resource called "Guide to DHS statistics", viewable [here](https://dhsprogram.com/data/Guide-to-DHS-Statistics){target="_blank"}. If you are studying a topic like HIV, you can simply go to HIV section, click on a specific subtopic, e.g. "Prior HIV testing" and you will see a list of variables that are relevant to that statistic.
 
@@ -110,7 +110,7 @@ The recode manuals are similar to the MAP files, but they explain each variable 
 
 4.  Finally, looking at official DHS publications on this [page](https://dhsprogram.com/publications/index.cfm){target="_blank"} may also be helpful.
 
-Note that the variables covered by the DHS vary from survey to survey, so some trial and error may be required to find an interesting topic that is covered in the dataset you chose.
+    **Note that the variables covered by the DHS vary from survey to survey, so some trial and error may be required to find an interesting topic that is covered in the dataset you chose.**
 
 # **Final step: Export and submit your work**
 
