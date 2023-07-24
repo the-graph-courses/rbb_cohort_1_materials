@@ -56,6 +56,8 @@ ir_ng_18_raw <-
                     ))
 ```
 
+**Note**: make sure ALL letters in the variable names are in lower case. If the data dictionary says "S1108BA" you should enter "s1108ba" in `col_select`.
+
 # Variable Renaming
 
 Assign descriptive names to the newly imported variables and then execute the code below.

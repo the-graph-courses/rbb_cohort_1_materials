@@ -5,7 +5,7 @@ author: "GRAPH Courses Team"
 date: "July 18, 2023"
 output: prettydoc::html_pretty
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 
 ```{r echo = F}
@@ -18,7 +18,7 @@ The Demographic and Health Surveys (DHS) are a series of standardized surveys co
 
 Several datasets (called recodes) are made available from each survey, including a household recode, men's recode and the women's recode (sometimes called the individual recode). This ***individual recode*** dataset contains individual-level data on women aged 15 to 49 in the surveyed households. This is what you will use for this workshop and for your final projects.
 
-Today we will be looking at individual recode (IR) data from **Nigeria (2018)**.
+Today we will be looking at individual recode (IR) data from **Nigeria (2018)**. Key finding from this dataset can be found in this [report](https://drive.google.com/file/d/10pp9O9EJZvideynYyANqJtBCsN_vNQjs/view).
 
 ### Load packages and importing data
 
@@ -135,6 +135,10 @@ ggplot(ir_clean,
 
 ## Position adjustments
 
+![](images/gg_min_build_positions.png){width="634"}
+
+### Histograms
+
 You can change the position adjustment within `geom_histogram()`.
 
 Possible values for the argument **position** in `geom_histogram()` are `“identity”`, `“stack”`, `“dodge”`, and `"fill"`. Default value is `“stack”`.
@@ -149,11 +153,15 @@ ggplot(ir_clean,
     position = "dodge") 
 ```
 
+### Barplots
+
+Like histograms, bar plots also visualize distributions, but for categorical variables.
+
 ```{r}
 # percent stacked bar plot of education
 ggplot(ir_clean, 
   aes(highest_educ,
     fill = urban_rural)) +
   geom_bar(position = "fill") +
-  theme_classic()
+  theme_classic() # built-in ggplot theme
 ```
