@@ -1,0 +1,541 @@
+---
+title: "Experience of Physical Violence among Women in Namibia"
+subtitle: "Findings from the 2013 Namibia Demographic and Health Survey"
+author: "Ester Nepolo"
+date: "Jan 16, 2023"
+output: prettydoc::html_pretty
+editor_options: 
+  chunk_output_type: console
+  markdown: 
+    wrap: 72
+    fig_caption: yes
+---
+
+```{r echo = F}
+knitr::opts_chunk$set(echo = F, warning = F, message = F)
+```
+
+```{r packages-and-plots}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## Packages ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+if(!require(pacman)) install.packages("pacman")
+pacman::p_load(
+  janitor, # data analysis utilities
+  here, # force rmds to use the project folder as working directory
+  haven, # for reading in stata files
+  scales, # for the comma() function, among others
+  ggstatsplot, # for pie charts
+  patchwork, # combining plots
+  tidyverse,# for everything!
+  prettydoc,# for output
+  reactable
+)
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ggplot2 palette  ----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# manual color scale for use later. 
+# Got the scale for this website: # https://mycolor.space/?hex=%2354B1BF&sub=1
+my_palette <- c("#98d8e3","#74cddb","#54B1BF","#288D9B","#006B78","#004A57")
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Import and process data  ----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+nam_raw <- haven::read_dta(here("rbp_cohort_0_final_assessment-main/data/NMIR61FL.DTA"),
+                          # col_select is used to avoid importing the entire dataset, 
+                          # which is very large
+                          col_select = c(
+                            v012,
+                            v013,
+                            v015,
+                            v020,
+                            v024,
+                            v025,
+                            v106,
+                            v130,
+                            v190,
+                            v218,
+                            v044,
+                            d105a,
+                            d105b,
+                            d105c,
+                            d105d,
+                            d105e,
+                            d105f,
+                            d105g,
+                            d105j,
+                            d115y,
+                            d117a,
+                            d130a,
+                            d118y,
+                            v025,
+                            v501,
+                            v502,
+                            caseid
+                          ))
+
+
+
+nam <- 
+  nam_raw %>% 
+  
+  # rename the needed variables
+  rename(age = v012,
+         age_group = v013, 
+         interview_completed = v015,
+         ever_married = v020,
+         region = v024,
+         type_of_area = v025,
+         highest_edu_level = v106,
+         religion = v130,
+         wealth_index = v190,
+         num_living_kids = v218,
+         select_dom_violence = v044,
+         ever_pushed = d105a,
+         ever_slapped = d105b,
+         ever_punched = d105c,
+         ever_been_kicked = d105d,
+         ever_been_strangled = d105e,
+         ever_been_threat = d105f,
+         ever_cs_physical = d105g,
+         ever_had_twisted_arm = d105j,
+         anyone_other_than_husband = d115y,
+         former_husband_or_partner = d130a,
+         freq_of_being_hit_not_by_husb = d117a,
+         ever_hurt_during_preg = d118y,
+         current_marital_status = v501,
+         in_union = v502,
+         case_identification = caseid
+         ) %>% 
+  
+  # convert from labelled data to regular factors
+  haven::as_factor() 
+  
+ # simplify age groups to categorise the women in three categories: Adolescent girls, Young women and Older women
+
+nam <- nam %>%
+  filter(!age_group == "50+") %>% 
+  mutate(
+  age_group = case_when(
+      age_group == "15-19" ~ "Adolescent girls",
+      age_group == "20-24" ~ "Young women",
+      age_group %in% c("25-29", "30-34", "35-39", "40-44", "45-49", "50+") ~ "Older women",
+      TRUE ~ as.character(age_group)),
+    age_group = factor(age_group, 
+                  levels = c("Adolescent girls", "Young women", "Older women")))
+
+
+#levels(ir$age_group)
+#tabyl(ir$age_group)
+```
+
+# Introduction
+
+Physical violence is a form of Domestic violence, characterised mostly
+by physical aggression such as hitting, kicking, biting, shoving,
+restraining, slapping, or throwing objects. This report presents
+findings from the 2013 Namibia Health and Demographic Survey, on the
+experience of physical violence among women age 15 - 49. The report
+presents the prevalence and distribution of physical violence by
+background characteristics.
+
+```{r physical violence}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## physical violence ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+num_women_in_survey <- nrow(nam) ## total women in the survey
+num_women_interviewed_dv_module <- nam %>% filter(select_dom_violence=="woman selected and interviewed") ## number of women age 15 - 49 selected and interviewed for DV Module
+
+ ##you can run this in the console to check the response categories too (num_women_select_dv_module$v015)
+
+# This analysis determines women age 15 - 49 who ever experienced physical violence.
+num_ever_exp_pv <- num_women_interviewed_dv_module %>% 
+  select(case_identification,
+         age,
+         age_group,
+         interview_completed,
+         ever_married,
+         region,
+         type_of_area,
+         highest_edu_level,
+         religion,
+         wealth_index,
+         num_living_kids,
+         current_marital_status,
+         anyone_other_than_husband,
+         former_husband_or_partner,
+         freq_of_being_hit_not_by_husb,
+         ever_hurt_during_preg,
+         in_union
+         ) %>% 
+filter( anyone_other_than_husband=="someone physically hurt respondent" | 
+         former_husband_or_partner %in% c ( "0-11 months ago", 
+                                            "12+ months ago", 
+                                            "yes, but don't remember when",
+                                            "yes, but frequency in last 12 months missing")|
+         ever_hurt_during_preg=="someone hurt respondent during pregnancy")  # number of women ever experienced any form of physical violence since age 15
+
+#reactable(num_ever_exp_pv) 
+ 
+pct_ever_exp_pv <- (nrow(num_ever_exp_pv)/nrow(num_women_interviewed_dv_module) * 100)%>% round(digits = 1)
+
+
+#simplify anyone other than husband variable to indicate Yes and No for those that ever experience violence by anyone else other than husband/partner for analysis purposes.
+
+num_ever_exp_pv <- num_ever_exp_pv %>%
+  filter(anyone_other_than_husband %in% c("someone physically hurt respondent", "none of these people ever physically hurt respondent")) %>% 
+  mutate(
+  anyone_other_than_husband = case_when(
+      anyone_other_than_husband == "someone physically hurt respondent" ~ "Yes",
+      anyone_other_than_husband == "none of these people ever physically hurt respondent" ~ "No",
+      TRUE ~ as.character(anyone_other_than_husband)),
+    anyone_other_than_husband = factor(anyone_other_than_husband, 
+                  levels = c("Yes", "No")))
+
+### Physical violence by anyone other than husband/partner----
+gg_bar_num_ever_exp_pv_by_other_than_partner <- # this is used to determine the number of women who have ever experienced any form of physical violence since the age of 15
+  num_ever_exp_pv %>% 
+  ggplot(aes(x = anyone_other_than_husband)) + 
+  geom_bar(aes(fill=anyone_other_than_husband))+
+  scale_fill_manual(values = c("#74cddb","#288D9B")) +
+labs(x = "Physical violence by anyone other than husband/partner", y = "Frequency count", title = "Respondents ever experienced physical violence n=714")+ 
+  theme_classic()
+
+#gg_bar_num_ever_exp_pv_by_other_than_partner
+
+
+ gg_col_ever_experience_physical_violence <- num_ever_exp_pv %>% count(anyone_other_than_husband) %>% 
+  mutate(pct = 100 * n/sum(n),
+         pct = round(pct, digits = 0), 
+         pct = as.character(pct),
+         pct = if_else(pct <1, "<1", pct),
+         pct = paste0(pct, "%")) %>% 
+  ggplot(aes(x = anyone_other_than_husband, y = n)) + 
+  geom_col(aes(fill=anyone_other_than_husband))  +
+    scale_fill_hue(direction = 1)+
+  geom_text(aes(y = n, 
+                label = pct),
+            fontface = "bold")  +
+  labs(x = "Physical violence", y = "Count", title = "Experience of Physical violence since age 15 n=714") + 
+  theme_classic()
+ 
+ 
+#gg_col_ever_experience_physical_violence
+
+
+### Physical violence in the last 12 months, preceding the survey----
+exp_pv_12_months_prior_survey <- 
+  num_ever_exp_pv %>% 
+  filter(former_husband_or_partner=="0-11 months ago" | freq_of_being_hit_not_by_husb %in% c("Often", "Sometimes"))
+
+
+pct_exp_pv_12_months_prior_survey <- (nrow(exp_pv_12_months_prior_survey)/nrow(num_ever_exp_pv) * 100)%>% round(digits = 1) 
+
+gg_bar_exp_pv_12_months_prior_survey <- 
+  exp_pv_12_months_prior_survey %>% 
+  ggplot(aes(x = in_union)) + 
+  geom_bar(aes(fill=in_union)) +
+  scale_fill_hue(direction = 1) +
+  labs(x = "Physical violence by union", y = "Frequency count", title = "Experience of Physical violence in last 12 months prior the survey by union n=5")+ 
+  theme_minimal()
+
+#gg_bar_exp_pv_12_months_prior_survey
+
+gg_col_exp_pv_12_months_prior_survey <- 
+  exp_pv_12_months_prior_survey %>% count(in_union) %>% 
+  mutate(pct = 100 * n/sum(n),
+         pct = round(pct, digits = 0), 
+         pct = as.character(pct),
+         pct = if_else(pct <1, "<1", pct),
+         pct = paste0(pct, "%")) %>% 
+  ggplot(aes(x = in_union, y = n)) + 
+  geom_col(aes(fill=in_union))  +
+    scale_fill_hue(direction = 1)+
+  geom_text(aes(y = n, 
+                label = pct),
+            fontface = "bold")  +
+  labs(x = "Physical violence by union", y = "Count", title = "Experience of Physical Violence by the last 12 months by union n=5") + 
+  theme_classic()
+
+#gg_col_exp_pv_12_months_prior_survey
+
+
+gg_col_exp_pv_during_preg <- 
+  num_ever_exp_pv %>% count(ever_hurt_during_preg) %>% 
+  mutate(pct = 100 * n/sum(n),
+         pct = round(pct, digits = 0), 
+         pct = as.character(pct),
+         pct = if_else(pct <1, "<1", pct),
+         pct = paste0(pct, "%")) %>% 
+  ggplot(aes(x = ever_hurt_during_preg, y = n)) + 
+  geom_col(aes(fill=ever_hurt_during_preg))  +
+    scale_fill_hue(direction = 1)+
+  geom_text(aes(y = n, 
+                label = pct),
+            fontface = "bold")  +
+  labs(x = "Ever hurt during pregnancy", y = "Frequency count", title = "Experience of Physical Violence during pregnancy n=5") + 
+  theme_classic()
+
+#gg_col_exp_pv_during_preg
+
+
+
+# Combine plot
+gg_experience_of_physical_violence <- 
+  patchwork::wrap_plots(gg_col_ever_experience_physical_violence, 
+                        gg_col_exp_pv_12_months_prior_survey, 
+                        ncol = 1) + 
+  plot_annotation(tag_levels = 'a')
+
+#gg_experience_of_physical_violence
+```
+
+# Prevalence of Physical violence
+
+Across the `r nrow(num_women_interviewed_dv_module)` surveyed women for
+Domestic Violence (age 15 to 49), `r nrow(num_ever_exp_pv)`, which is
+about two in five women (`r pct_ever_exp_pv`%) have experienced physical
+violence since the age 15 and of which
+`r nrow(exp_pv_12_months_prior_survey)`,
+(`r pct_exp_pv_12_months_prior_survey`%) experienced physical violence
+12 months prior to the survey.
+
+```{r fig.height = 4, fig.cap = " Figure 1: Distribution of physical violence among surveyed women."}
+
+gg_experience_of_physical_violence
+```
+
+As presented in figure 1 above, among the women age 15 - 49 that
+experienced physical violence since the age 15, the majority (84
+percent) were violated/hurt by anyone other than their husbands or
+partners. Among those that experienced physical violence in 12 months
+preceding the survey, the majority (60 percent) were currently in union
+or living with a man.
+
+```{r physical violence by background characteristics}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## Physical violence by age group, type of residence, region, marital status, type of union, number of living children, educational level, wealth index----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# The analyses below are only carried out among individuals age 15 - 49 who ever experienced any form of physical violence since the age of 15 years
+
+
+### Physical violence by age group----
+
+gg_col_exp_pv_by_age_group <- 
+  num_ever_exp_pv %>% count(age_group) %>% 
+  mutate(pct = 100 * n/sum(n),
+         pct = round(pct, digits = 0), 
+         pct = as.character(pct),
+         pct = if_else(pct <1, "<1", pct),
+         pct = paste0(pct, "%")) %>% 
+  ggplot(aes(x = age_group, y = n)) + 
+  geom_col(aes(fill=age_group))  +
+    scale_fill_hue(direction = 1)+
+  geom_text(aes(y = n, 
+                label = pct),
+            fontface = "bold")  +
+  labs(x = "Age_group", y = "Count", title = "Experience of Physical Violence by age group n=714") + 
+  theme_classic()
+
+#gg_col_exp_pv_by_age_group
+
+
+
+### Physical violence by number of living children----
+
+num_ever_exp_pv_by_children <- num_ever_exp_pv %>% 
+  mutate(num_living_kids = case_when(num_living_kids <=0 ~"No child",
+                                     num_living_kids <5 ~"Less than five children",
+                                     num_living_kids >=5 ~"Five or more children",
+    TRUE ~ as.character(num_living_kids)),
+    num_living_kids = factor(num_living_kids, 
+                  levels = c("No child", "Less than five children", "Five or more children")))
+
+#tabyl(num_ever_exp_pv_by_children$num_living_kids)
+
+gg_bar_num_ever_exp_pv_by_children <- # this is based experience of physical violence by the number of living children
+  num_ever_exp_pv_by_children %>% 
+  ggplot(aes(x = num_living_kids)) + 
+  geom_bar(aes(fill=num_living_kids))+
+  scale_fill_manual(values = c("#74cddb","#54B1BF","#288D9B")) +
+  labs(x = "Number of living children", y = "Count", title = "Respondents ever experienced physical violence by number of living children n=714")+ 
+  theme_classic()
+
+#gg_bar_num_ever_exp_pv_by_children
+
+
+# Combine plot
+gg_experience_of_pv_by_aggrp_kids <- 
+  patchwork::wrap_plots(gg_col_exp_pv_by_age_group, 
+                        gg_bar_num_ever_exp_pv_by_children, 
+                        ncol = 1) + 
+  plot_annotation(tag_levels = 'a')
+
+#gg_experience_of_pv_by_aggrp_kids
+
+
+### Physical violence by type of residence----
+
+gg_bar_num_ever_exp_pv_by_area <- # this is an analysis of physical violence by type or type of area, either rural or urban
+  num_ever_exp_pv %>% 
+  ggplot(aes(x = type_of_area)) + 
+  geom_bar(aes(fill=type_of_area)) +
+   scale_fill_hue(direction = 1) +
+  labs(x = "Type of area", y = "Count", title = "PV by type of area n=714")+
+  theme_classic()
+
+
+#gg_bar_num_ever_exp_pv_by_area
+
+#pct_ever_exp_pv_by_region <- (ncol(region)/ncol(anyone_other_than_husband) * 100)%>% round(digits = 1) 
+
+### Physical violence by region----
+
+gg_bar_num_ever_exp_pv_by_region <- # this is an analysis of physical violence by region
+  num_ever_exp_pv %>% 
+  ggplot(aes(x = anyone_other_than_husband)) + 
+  geom_bar(aes(fill=region)) +
+  scale_fill_hue(direction = 1) + #opted for hue scale fill as opposed to 12 colors required for manual scale fill
+  labs(x = "Physical violence", y = "Frequency count", title = "Physical violence by region n=714",
+       fill = "Region")+
+  theme_classic()
+
+#gg_bar_num_ever_exp_pv_by_region 
+
+
+# Combine plot
+gg_experience_of_pv_by_residence <- 
+  patchwork::wrap_plots(gg_bar_num_ever_exp_pv_by_area, 
+                        gg_bar_num_ever_exp_pv_by_region , 
+                        ncol = 1) + 
+  plot_annotation(tag_levels = 'a')
+
+#gg_experience_of_pv_by_residence
+
+            
+### Physical violence by marital status----
+
+
+gg_bar_physical_violence_by_marital_status <- # this is an analysis of physical violence by marital status
+  num_ever_exp_pv %>% 
+  ggplot(aes(x = current_marital_status)) + 
+  geom_bar(aes(fill=current_marital_status)) +
+  scale_fill_hue(direction = 1) + 
+  labs(x = "Marital status", y = "Count", title = "PV by marital status n=714",
+       fill = "Marital status")+
+  theme_classic()
+
+#gg_bar_physical_violence_by_marital_status 
+
+
+### Physical violence by type of union----
+num_in_union_ever_exp_pv <- num_ever_exp_pv %>% 
+  filter(in_union != "never in union" & anyone_other_than_husband %in% c("Yes", "No"))
+
+pct_in_union_ever_exp_pv_by_partner <- (nrow(num_in_union_ever_exp_pv)/nrow(num_ever_exp_pv) * 100)%>% round(digits = 1)
+
+gg_bar_num_ever_exp_pv_by_union <- # this is based on physical violence by type of union
+  num_ever_exp_pv %>% 
+  ggplot(aes(x = in_union)) + 
+  geom_bar(aes(fill=in_union))+
+  scale_fill_manual(values = c("#74cddb","#54B1BF","#288D9B")) +
+  labs(x = "Type of Union", y = "Count", title = "Respondents ever experienced physical violence by type of union n=714")+ 
+  theme_classic()
+
+#gg_bar_num_ever_exp_pv_by_union
+
+
+# Combine plot
+gg_experience_of_pv_by_marital_union <- 
+  patchwork::wrap_plots(gg_bar_physical_violence_by_marital_status, 
+                        gg_bar_num_ever_exp_pv_by_union, 
+                        ncol = 1) + 
+  plot_annotation(tag_levels = 'a')
+
+#gg_experience_of_pv_by_marital_union
+
+
+
+
+### Experience of Physical violence per educational level----
+
+gg_bar_num_ever_exp_pv_by_educ_level <- 
+  num_ever_exp_pv %>% 
+ ggplot(aes(x = highest_edu_level)) + 
+  geom_bar(aes(fill=highest_edu_level))+
+  scale_fill_manual(values = c("#74cddb","#54B1BF","#288D9B","#006B78")) +
+  labs(x = "Highest educational level", y = "Count", title = "Respondents ever experienced physical violence by educational level n=714")+ 
+  theme_classic()
+
+#gg_bar_num_ever_exp_pv_by_educ_level
+
+### Experience of Physical violence by wealth index----
+
+gg_bar_num_ever_exp_pv_by_wealth_index <- 
+  num_ever_exp_pv %>% 
+ ggplot(aes(x = wealth_index)) + 
+  geom_bar(aes(fill=wealth_index))+
+  scale_fill_manual(values = c("#74cddb","#54B1BF","#288D9B","#006B78","#004A57")) +
+  labs(x = "Wealth index", y = "Count", title = "Respondents ever experienced physical violence by wealth index n=714")+ 
+  theme_classic()
+
+#gg_bar_num_ever_exp_pv_by_wealth_index
+
+# Combine plot
+gg_experience_of_pv_by_education_wealth <- 
+  patchwork::wrap_plots(gg_bar_num_ever_exp_pv_by_educ_level, 
+                        gg_bar_num_ever_exp_pv_by_wealth_index, 
+                        ncol = 1) + 
+  plot_annotation(tag_levels = 'a')
+
+#gg_experience_of_pv_by_education_wealth
+
+
+```
+
+## Physical Violence by background characteristics
+
+Experience of physical violence varies substantially by background
+characteristics. As per Figure 2 below, older women (women between 25
+and 49 years were more likely to experience physical violence compared
+to Adolescent Girls and Young Women. Women with less than five children
+were more likely to experience physical violence compared to those women
+without children or those women with five or more children.
+
+```{r fig.height = 8, fig.cap = " Figure 2: Distribution of physical violence by age group and number of living children"}
+
+gg_experience_of_pv_by_aggrp_kids
+
+```
+ 
+ As indicated in Figure 3 below, there is no significant difference between rural and urban women in their experience of physical violence, however, rural women are slightly more likely to experience violence than urban women. Women from Kavango, Omaheke, //Karas and Kunene are more likely to experience physical violence and these regions are mostly in remote areas. 
+
+```{r fig.height = 8, fig.cap = "Figure 3: Distribution of physical violence by type of area and region"}
+
+gg_experience_of_pv_by_residence
+
+```
+
+Women that were never in union are more likely to experience physical violence as presented in Figure 4 below.
+
+```{r fig.height = 8, fig.cap = "Figure 4: Distribution of physical violence by marital statatus and union"}
+
+gg_experience_of_pv_by_marital_union
+
+```
+
+Further, as presented in Figure 5, the survey shows that women with secondary education were more likely to experience physical violence, however there is no clear pattern in the relationship between wealth and the experience of physical violence.  
+
+```{r fig.height = 8, fig.cap = "Figure 5: Distribution of physical violence by educational level and union"}
+
+gg_experience_of_pv_by_education_wealth
+
+```
+
+
+\`\`\`

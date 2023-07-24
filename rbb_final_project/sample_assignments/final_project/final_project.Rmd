@@ -1,0 +1,561 @@
+---
+title: "Final project - HIV prevalence in Lesotho"
+author: "Giulia Rathmes"
+date: "2023-01-31"
+output: html_document
+---
+
+
+```{r echo = F}
+knitr::opts_chunk$set(echo = F, warning = F, message = F)
+```
+
+
+```{r packages}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## Packages ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+if(!require(pacman)) install.packages("pacman")
+pacman::p_load(
+  janitor, # data analysis utilities
+  here, # force rmds to use the project folder as working directory
+  haven, # for reading in stata files
+  scales, # for the comma() function, among others
+  ggstatsplot, # for pie charts
+  patchwork, # combining plots
+  tidyverse,
+  esquisse,
+  RColorBrewer# for everything!
+)
+
+```
+
+
+```{r}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Import and process data  ----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# load DHS data of Lesotho
+lesotho_raw <- haven::read_dta(here("data/LSIR71FL.DTA"),
+                          # col_select is used to avoid importing the entire 
+                          # dataset, which is very large
+                          col_select = c(v001, v002, v003, v012, v022, v013, v024,
+                                         v190, v149, v006, v007, v009, 
+                                         v010, v025, v751, v766b))
+
+# convert from labelled data to regular factors
+lesotho_converted <- 
+  lesotho_raw  %>%
+  haven::as_factor() # pass the whole data frame to as_factor()
+
+
+lesotho <- 
+  lesotho_converted %>% 
+  
+  # rename the needed variables
+  rename(cluster_id = v001, 
+         household_id= v002,
+         line_id = v003,
+         age = v012,
+         state = v022,
+         age_group = v013, 
+         region = v024, 
+         wealth_index = v190, 
+         educ = v149, 
+         mth_interview = v006, 
+         yr_interview = v007, 
+         mth_birth = v009, 
+         yr_birth = v010, 
+         urban_rural = v025,
+         heard_of_HIV = v751,
+         number_sex_partners = v766b) %>% 
+
+# simplify education categories
+  mutate(
+    educ = as.character(educ),
+    educ = case_when(
+      educ %in% c("incomplete primary", "complete primary") ~ "Primary",
+      educ %in% c("incomplete secondary", "complete secondary") ~ "Secondary",
+      educ == "no education" ~ "None",
+      educ == "higher" ~ "Higher",
+      TRUE ~ educ),
+    educ = factor(educ, 
+                  levels = c("None", "Primary", "Secondary", "Higher")))
+
+
+
+# Load hiv dataset 
+lesotho_hiv <- haven::read_dta(here("data/LSAR72FL.DTA"),
+                               col_select = c(hivclust, hivnumb, hivline, hiv03, hiv05))
+                               
+# convert from labelled data to regular factors
+lesotho_hiv_converted <- 
+  lesotho_hiv  %>%
+  haven::as_factor() # pass the whole data frame to as_factor()
+
+
+lesotho_hiv <- 
+  lesotho_hiv_converted %>% 
+  
+  # rename the needed variables
+  rename(cluster_id = hivclust, 
+         household_id= hivnumb,
+         line_id =  hivline,
+         blood_test_result = hiv03, 
+         HIV_weight = hiv05)                           
+                               
+                               
+#Merge the HIV dataset with the women dataset
+lesotho_merged <- merge(lesotho, lesotho_hiv, by=c("cluster_id","household_id","line_id"))
+
+my_palette <- c("#9e0142","#5e4fa2")
+```
+
+```{r, include = FALSE, warning = FALSE, message = FALSE}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Calculate HIV prevalence  ----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+lesotho_merged <-
+  lesotho_merged %>%
+  mutate(hiv_positive = case_when(blood_test_result == "hiv  positive" ~ "Positive",
+                                TRUE ~ "Negative"))
+
+
+
+lesotho_merged$hiv_positive = replace(lesotho_merged$hiv_positive,
+                                      lesotho_merged$hiv_positive == "Positive", 1)
+lesotho_merged$hiv_positive = replace(lesotho_merged$hiv_positive,
+                                      lesotho_merged$hiv_positive == "Negative", 0)
+lesotho_merged$hiv_positive = as.integer(lesotho_merged$hiv_positive)
+
+
+# Number of women in survey
+num_women_in_survey <- nrow(lesotho_merged)
+# Number of women in survey with positive HIV test
+num_hiv_positive <- lesotho_merged %>% filter(hiv_positive == 1) %>% nrow()
+pct_with_hiv <- (num_hiv_positive/num_women_in_survey*100) %>% round(digits = 1)
+
+lesotho_merged <- 
+  lesotho_merged %>% mutate(
+    number_sex_partners = as.character(number_sex_partners))
+
+```
+
+```{r}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## HIV prevalence by region ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+lesotho_merged_region <-
+  lesotho_merged %>%
+  group_by(region) %>%
+  summarise(hiv_prevalence = 
+              sum(hiv_positive)/n()*100)
+
+hiv_prev_region <- ggplot(lesotho_merged_region) +
+                    aes(x = reorder(region, hiv_prevalence), y = hiv_prevalence,
+                        fill = reorder(region, hiv_prevalence)) +
+                    geom_col() +
+                    scale_fill_brewer("Region", palette="Spectral")+
+                    labs(x="Regions in Lesotho", y="HIV prevalence (%)",
+                    title="HIV prevalence by region in Lesotho 2014")+
+                    cowplot::theme_cowplot() +
+                    theme(axis.text.x=element_text(angle=45,vjust=1, hjust=1))
+
+# highest prevalence in leribe
+num_women_leribe  <- lesotho_merged %>% filter(region =="leribe") %>% nrow()
+num_hiv_leribe <- lesotho_merged %>% filter(hiv_positive == 1 & region =="leribe") %>% nrow()
+pct_with_hiv_leribe <- (100 * num_hiv_leribe/num_women_leribe) %>% round(digits = 1)
+
+# lowest prevalence in botha-bothe
+num_women_bb  <- lesotho_merged %>% filter(region =="botha-bothe") %>% nrow()
+num_hiv_bb <- lesotho_merged %>% filter(hiv_positive == 1 & region =="botha-bothe") %>% nrow()
+pct_with_hiv_bb <- (100 * num_hiv_bb/num_women_bb) %>% round(digits = 1)
+
+
+```
+
+
+```{r leribe}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Demographics  ----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## Number of sexual partners in Leribe ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+lesotho_leribe <- lesotho_merged %>% filter(region =="leribe")
+
+lesotho_leribe <- 
+  lesotho_leribe %>% mutate(
+    number_sex_partners = as.character(number_sex_partners))
+
+num_women_leribe <- nrow(lesotho_leribe)
+num_women_more_than_one_sexual_partner_leribe <- lesotho_leribe %>% 
+  filter(number_sex_partners >= 2)%>% nrow()
+pct_more_than_one_sexual_partner_leribe <- (100 * num_women_more_than_one_sexual_partner_leribe/num_women_leribe) %>% round(digits = 1)
+num_never_sex_leribe <- lesotho_leribe %>% 
+  filter(number_sex_partners == 0)%>% nrow()
+pct_never_sex_leribe <- (100 * num_never_sex_leribe/num_women_leribe) %>% round(digits = 1)
+
+lesotho_leribe <- 
+  lesotho_leribe %>% mutate(
+    number_sex_partners = case_when(number_sex_partners == 0 ~ "Never had sex",
+                                    number_sex_partners == 1 ~ "1",
+                                    number_sex_partners == 2 ~ "2",
+                                    number_sex_partners == 3 ~ "3",
+                                    number_sex_partners >= 4 ~ "+4",
+                                    TRUE ~ "No information"),
+    number_sex_partners = factor(number_sex_partners, 
+                  levels = c("Never had sex", "1", "2", "3", "+4", "No information")))
+
+sex_partners_leribe <- ggplot(lesotho_leribe) +
+  aes(x = number_sex_partners) +
+  geom_bar(fill = "#5e4fa2") +
+  labs(
+    x = "Number of sexual partners",
+    y = "Count",
+    title = "Leribe"
+  ) +
+  cowplot::theme_cowplot() +
+  theme(axis.text.x=element_text(angle=45,vjust=1, hjust=1))
+
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## Number of sexual partners in Botha-Bothe ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+lesotho_bb <- lesotho_merged %>% filter(region =="botha-bothe")
+
+lesotho_bb <- 
+  lesotho_bb %>% mutate(
+    number_sex_partners = as.character(number_sex_partners))
+
+num_women_bb <- nrow(lesotho_bb)
+num_women_more_than_one_sexual_partner_bb <- lesotho_bb %>% 
+  filter(number_sex_partners >= 2)%>% nrow()
+pct_more_than_one_sexual_partner_bb <- (100 * num_women_more_than_one_sexual_partner_bb/num_women_bb) %>% round(digits = 1)
+num_never_sex_bb <- lesotho_bb %>% 
+  filter(number_sex_partners == 0)%>% nrow()
+pct_never_sex_bb <- (100 * num_never_sex_bb/num_women_bb) %>% round(digits = 1)
+
+lesotho_bb <- 
+  lesotho_bb %>% mutate(
+    number_sex_partners = case_when(number_sex_partners == 0 ~ "Never had sex",
+                                    number_sex_partners == 1 ~ "1",
+                                    number_sex_partners == 2 ~ "2",
+                                    number_sex_partners == 3 ~ "3",
+                                    number_sex_partners >= 4 ~ "+4",
+                                    TRUE ~ "No information"),
+    number_sex_partners = factor(number_sex_partners, 
+                  levels = c("Never had sex", "1", "2", "3", "+4", "No information")))
+
+sex_partners_bb <- ggplot(lesotho_bb) +
+  aes(x = number_sex_partners) +
+  geom_bar(fill = "#9e0142") +
+  labs(
+    x = "Number of sexual partners",
+    y = "Count",
+    title = "Botha-Bothe"
+  ) +
+  cowplot::theme_cowplot() +
+  theme(axis.text.x=element_text(angle=45,vjust=1, hjust=1))
+
+
+hiv_sex_partners <- 
+  patchwork::wrap_plots(sex_partners_leribe, 
+                        sex_partners_bb, 
+                        ncol = 2) + 
+  plot_annotation(tag_levels = 'a')
+
+
+```
+
+```{r }
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Demographics  ----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Educational status in Leribe  ----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+df_educ_leribe <- lesotho_leribe %>% 
+  group_by(educ) %>%
+  count() %>% 
+  ungroup() %>% 
+  mutate(perc = `n` / sum(`n`)) %>% 
+  arrange(perc) %>%
+  mutate(labels = scales::percent(perc))
+
+pie_chart_educ_leribe <- ggplot(data = df_educ_leribe, aes(x = "", y = n, fill = educ)) +
+  geom_bar(stat = "identity") + 
+  coord_polar("y") +
+  theme_void() + 
+  scale_fill_brewer("Educational level", palette="Spectral")+
+  geom_text(aes(x = 1.6, label = scales::percent(perc, accuracy = .1)),
+            position = position_stack(vjust = .5), size = 2.5) +
+  labs(title = "Leribe") +
+  theme(plot.title = element_text(face="bold"))
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Educational status in Botha-Bothe  ----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+df_educ_bb <- lesotho_bb %>% 
+  group_by(educ) %>%
+  count() %>% 
+  ungroup() %>% 
+  mutate(perc = `n` / sum(`n`)) %>% 
+  arrange(perc) %>%
+  mutate(labels = scales::percent(perc))
+
+
+pie_chart_educ_bb <- ggplot(data = df_educ_bb, aes(x = "", y = n, fill = educ)) +
+  geom_bar(stat = "identity") + 
+  coord_polar("y") +
+  theme_void() + 
+  scale_fill_brewer("Educational level", palette="Spectral")+
+  geom_text(aes(x = 1.6, label = scales::percent(perc, accuracy = .1)),
+            position = position_stack(vjust = .5), size = 2.5) +
+  labs(title = "Botha-Bothe") +
+  theme(plot.title = element_text(face="bold"))
+
+
+education_levels <- 
+  patchwork::wrap_plots(pie_chart_educ_leribe, 
+                        pie_chart_educ_bb, 
+                        ncol = 2) + 
+  plot_annotation(tag_levels = 'a')
+
+
+```
+
+```{r }
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Demographics  ----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Age distribution in Leribe  ----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+df_age_lesotho <- lesotho_merged %>% 
+  filter(region=="leribe" | region =="botha-bothe") %>%
+  group_by(age_group, region) %>%
+  count() %>% 
+  ungroup() %>% 
+  mutate(perc = `n` / sum(`n`)) %>% 
+  arrange(perc) %>%
+  mutate(labels = scales::percent(perc)) %>%
+  mutate(percentage = perc*100)
+
+age_distribution <- df_age_lesotho %>% mutate(
+    percentage = ifelse(region=="leribe", percentage*(-1),
+                        percentage*1))%>%
+    ggplot(aes(x = age_group,y = percentage, fill = region)) + 
+    geom_bar(stat = "identity") +
+    scale_fill_manual("Region", values = my_palette) +
+    coord_flip()+ 
+   labs(title = "Age distribution", x = "Age group",
+        y = "Percentage of women in age group") +
+  cowplot::theme_cowplot()
+```
+
+```{r HIV prevalence by age group}
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## ANALYSIS ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## HIV prevalence by age ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+lesotho_merged_age_group <-
+  lesotho_merged %>%
+  filter(region=="leribe" | region =="botha-bothe") %>%
+  group_by(age_group, region) %>%
+  summarise(hiv_prevalence = 
+              sum(hiv_positive)/n()*100)
+                
+hiv_prev_age_group <- ggplot(lesotho_merged_age_group) +
+                    aes(x = age_group, y = hiv_prevalence,
+                        fill = region) +
+                    geom_col(position = "dodge") +
+                    scale_fill_manual("Region", values = my_palette) +
+                    labs(x="Age group", y="HIV prevalence (%)",
+                    title="HIV prevalence by age group in Lesotho 2014")+
+                    cowplot::theme_cowplot() +
+                    theme(axis.text.x=element_text(angle=45,vjust=1, hjust=1))
+
+hiv_highest_prev_leribe <- lesotho_merged_age_group %>%
+  filter(region =="leribe") 
+hiv_high_prev_leribe <- max(hiv_highest_prev_leribe$hiv_prevalence)
+hiv_high_prev_leribe <- round(hiv_high_prev_leribe, 2)
+
+hiv_highest_prev_bb <- lesotho_merged_age_group %>%
+  filter(region =="botha-bothe")
+hiv_high_prev_bb <- max(hiv_highest_prev_bb$hiv_prevalence)
+hiv_high_prev_bb <- round(hiv_high_prev_bb, 2)
+
+hiv_prev_bb_30_34 <- lesotho_merged_age_group %>%
+  filter(region =="botha-bothe" & age_group == "30-34")
+hiv_prev_bb_30_34 <- max(hiv_prev_bb_30_34$hiv_prevalence)
+hiv_prev_bb_30_34 <- round(hiv_prev_bb_30_34, 2)
+
+```
+
+
+```{r HIV prevalence by educational status}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## HIV prevalence by educational status ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+lesotho_merged_educ <-
+  lesotho_merged %>%
+  filter(region=="leribe" | region =="botha-bothe") %>%
+  group_by(educ, region) %>%
+  summarise(hiv_prevalence = 
+              sum(hiv_positive)/n()*100)
+
+hiv_prev_educ <- ggplot(lesotho_merged_educ) +
+                    aes(x = educ, y = hiv_prevalence,
+                        fill = region) +
+                    geom_col(position = "dodge") +
+                    scale_fill_manual("Region", values = my_palette) +
+                    labs(x="Level of education", y="HIV prevalence (%)",
+                    title="HIV prevalence by educational level in Lesotho 2014")+
+                    cowplot::theme_cowplot() +
+                    theme(axis.text.x=element_text(angle=45,vjust=1, hjust=1))
+
+
+hiv_educ_prev_leribe <- lesotho_merged_educ %>%
+  filter(region =="leribe") 
+hiv_educ_prev_leribe <- max(hiv_educ_prev_leribe$hiv_prevalence)
+hiv_educ_prev_leribe <- round(hiv_educ_prev_leribe, 2)
+
+hiv_educ_prev_bb <- lesotho_merged_educ %>%
+  filter(region =="botha-bothe") 
+hiv_educ_prev_bb <- max(hiv_educ_prev_bb$hiv_prevalence)
+hiv_educ_prev_bb <- round(hiv_educ_prev_bb, 2)
+```
+
+
+```{r HIV prevalence by sexual partners}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## HIV prevalence by sexual partners ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+lesotho_merged_sex_partner <-
+  lesotho_merged %>%
+  filter(region=="leribe" | region =="botha-bothe") %>%
+  group_by(number_sex_partners, region) %>%
+  summarise(hiv_prevalence = 
+              sum(hiv_positive)/n()*100)
+
+lesotho_merged_sex_partner <- 
+  lesotho_merged_sex_partner %>% mutate(
+    number_sex_partners = case_when(number_sex_partners == 0 ~ "Never had sex",
+                                    number_sex_partners == 1 ~ "1",
+                                    number_sex_partners == 2 ~ "2",
+                                    number_sex_partners == 3 ~ "3",
+                                    number_sex_partners >= 4 ~ "+4",
+                                    TRUE ~ "No information"),
+    number_sex_partners = factor(number_sex_partners, 
+                  levels = c("Never had sex", "1", "2", "3", "+4", "No information")))
+
+hiv_prev_sex_partners <- ggplot(lesotho_merged_sex_partner) +
+                    aes(x = number_sex_partners, y = hiv_prevalence,
+                        fill = region) +
+                    geom_col(position = "dodge") +
+                    scale_fill_manual("Region", values = my_palette) +
+                    labs(x="Number of sexual partners", y="HIV prevalence (%)",
+                    title="HIV prevalence by number of sexual partners in Lesotho 2014")+
+                    cowplot::theme_cowplot() +
+                    theme(axis.text.x=element_text(angle=45,vjust=1, hjust=1))
+
+
+hiv_sex_partner_prev_leribe <- lesotho_merged_sex_partner %>%
+  filter(region =="leribe") 
+hiv_sex_partner_prev_leribe <- max(hiv_sex_partner_prev_leribe$hiv_prevalence)
+hiv_sex_partner_prev_leribe <- round(hiv_sex_partner_prev_leribe, 2)
+
+hiv_sex_partner_prev_bb <- lesotho_merged_sex_partner %>%
+  filter(region =="botha-bothe") 
+hiv_sex_partner_prev_bb <- max(hiv_sex_partner_prev_bb$hiv_prevalence)
+hiv_sex_partner_prev_bb <- round(hiv_sex_partner_prev_bb, 2)
+```
+
+
+
+# HIV prevalence by region in Lesotho 2014
+
+Across the `r comma(num_women_in_survey)` surveyed women (ages 15 to 49), `r num_hiv_positive` women (`r pct_with_hiv`%) had HIV. 
+
+```{r fig.height = 4}
+#| fig.cap = "HIV prevalence by region in Lesotho 2014"
+hiv_prev_region
+```
+
+Figure 1 shows the HIV prevalence by region. Leribe is the region with the highest prevalence of HIV (`r comma(pct_with_hiv_leribe)`%), whereas Botha-Bothe had the lowest prevalence (`r comma(pct_with_hiv_bb)`%) of HIV in 2014. 
+
+# Demographics in Leribe and Botha-Bothe
+
+### a. Age distrubtion of women in Leribe vs. Botha-Bothe
+```{r fig.height = 4}
+#| fig.cap = "Age distribution in Leribe vs. Botha-Bothe"
+age_distribution
+```
+
+Figure 2 illustrates the age distribution in Leribe, the region with the highest HIV prevalence, versus Botha-Bothe, the region with the lowest HIV prevalence. The distribution of age was similar in Leribe to Botha-Bothe.
+
+### b. Educational status of women in Leribe vs. Botha-Bothe
+
+```{r fig.height = 4}
+#| fig.cap = "Level of education in Leribe vs. Botha-Bothe"
+education_levels
+```
+
+Figure 3 illustrates the level of education in women aged 15-49 in Leribe vs. Botha-Bothe. The educational background was similar in Leribe to Botha-Bothe. In Leribe 66.3% and in Botha-Bothe 63% had achieved secondary education or higher. 
+
+### c. Number of sexual partners in Leribe vs. Botha-Bothe
+
+```{r fig.height = 4}
+#| fig.cap = "Number of sexual partners in Leribe vs. Botha-Bothe"
+hiv_sex_partners
+```
+
+Figure 4 shows the number of sexual partners in Leribe, the region with the highest HIV prevalence, and in Botha-Bothe, the region with the lowest HIV prevalence. In Leribe, `r comma(pct_more_than_one_sexual_partner_leribe)`% of women aged 15-49 had sex with two or more sexual partners, whereas `r comma(pct_never_sex_leribe)`% never had sex. In Botha-Bothe, `r comma(pct_more_than_one_sexual_partner_bb)`% had sex with two or more sexual partners, whereas `r comma(pct_never_sex_bb)`% never had sex.
+
+# Analysis of demographic variables and HIV prevalence
+### a. HIV Prevalence in Leribe and Botha-Bothe by age group
+
+```{r fig.height = 4}
+#| fig.cap = "HIV Prevalence in Leribe and Botha-Bothe by age group"
+hiv_prev_age_group
+```
+
+In Leribe 30-34 year-olds had the highest prevalence of HIV (`r comma(hiv_high_prev_leribe)`%), wheres in Botha-Bothe 30-34 year-olds had a low prevalence of HIV (`r comma(hiv_prev_bb_30_34)`%). In Botha-Bothe the highest prevalence of HIV was among 35-39 year-olds (`r comma(hiv_high_prev_bb)`%).
+
+### b. HIV Prevalence in Leribe and Botha-Bothe by educational status
+
+```{r fig.height = 4}
+#| fig.cap = "HIV Prevalence in Leribe and Botha-Bothe by educational status"
+hiv_prev_educ
+```
+
+In Leribe and Botha-Bothe the prevalence of HIV decreased by the degree of education. In Leribe women with primary education had the highest prevalence of HIV (`r comma(hiv_educ_prev_leribe)`%), whereas in Botha-Bothe women with no education had the highest prevalence of HIV (`r comma(hiv_educ_prev_bb)`%). 
+
+### c. HIV Prevalence in Leribe and Botha-Bothe by the number of sexual partners
+
+```{r fig.height = 4}
+#| fig.cap = "HIV Prevalence in Leribe and Botha-Bothe by the number of sexual partners"
+hiv_prev_sex_partners
+```
+In Leribe women that had four or more sexual partners had the highest prevalence of HIV (`r comma(hiv_sex_partner_prev_leribe)`%). In Botha-bothe the highest prevalence of HIV was in the group that did not give any information on their sexual activity (`r comma(hiv_sex_partner_prev_bb)`%). 
+
+# Conclusion
+
+In summary, HIV prevalence was highest in Leribe, which could be in part due to women being more liberal and having more sexual partners than in other regions, especially compared to Botha-Bothe. In Botha-Bothe especially women who were uneducated had the highest prevelance of HIV. Targeted educational programs in those groups of women are needed to decrease the burden of HIV in the area. 

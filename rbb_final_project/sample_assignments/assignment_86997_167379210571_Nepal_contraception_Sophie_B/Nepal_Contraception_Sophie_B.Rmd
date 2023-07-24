@@ -1,0 +1,650 @@
+---
+title: "Knowledge and use of contraception among Women in Nepal"
+subtitle: "Findings from the 2018 Demographic and Health Survey"
+author: "GRAPH Courses Team"
+date: "Jan 14, 2023"
+output: prettydoc::html_pretty
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r echo = F}
+knitr::opts_chunk$set(echo = F, warning = F, message = F, fig.width = 12,fig.height = 4)
+```
+
+```{r}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## Packages ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+if(!require(pacman)) install.packages("pacman")
+pacman::p_load(
+  janitor, # data analysis utilities
+  here, # force rmds to use the project folder as working directory
+  haven, # for reading in stata files
+  scales, # for the comma() function, among others
+  ggstatsplot, # for pie charts
+  tidyverse, # for everything!
+  inspectdf, # for inspecting variables before analyse 
+  scales, # for formating numbers
+  ggalluvial # for specific plot
+)
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Import and process data  ----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# IR stands for individual recode
+ir_raw <- haven::read_dta(
+  here("data/NPIR7HFL.DTA"),
+    col_select = c(
+    v012, # age
+    v013, # age group
+    v022, # state
+    v024, # region
+    v025, #rural vs urban
+    v106, #Highest educationnal level
+    v149, #education
+    v155, #litteracy
+    v190, # Wealth index
+    v201, # number of kids born
+    v218, # number of kids still alive
+    v301, #Knowledge of any contraceptiv method                         
+    v312, #Current contraceptive method                    
+    v313, #Current contraceptive method grouped                    
+    v360, #Reason of last discontinuation
+    v384a, #Heard family planning info on radio                  
+    v384b, #Heard family planning info on Tv                  
+    v384c, #Heard family planning info on newspapers                  
+    v384d, #Heard family planning info on text messages on mobil                   
+    v850a, # Respondent can refuse sex
+    v850b, # Respondent can ask partner to use a condom
+    v605, # Respondent desire more children 
+    v501)) # Current marital status)
+
+# rename the needed variables
+ir <- 
+  ir_raw %>% 
+  rename(highest_educational_level_W = v106,   
+         state = v022,
+         educ = v149, 
+         age = v012, 
+         age_group = v013, 
+         num_child_born = v201, 
+         num_child_alive = v218,
+         region = v024, 
+         wealth_index = v190, 
+         age = v012, 
+         urban_rural = v025,
+         literacy = v155,
+         knowledge_contraception = v301,
+         current_contraception= v312,
+         current_contraception_grouped= v313,
+         reason_discontinuation_cont = v360,
+         family_planning_info_radio = v384a,
+         family_planning_info_TV = v384b,
+         family_planning_info_newspapers = v384c,
+         family_planning_info_sms = v384d,
+         marital_status = v501,
+         can_refuse_sex = v850a,
+         can_ask_condom = v850b,
+         desire_more_children = v605) %>% 
+  # convert from labelled data to regular factors
+  haven::as_factor() %>% 
+  # simplify education categories
+  mutate(
+    educ = as.character(educ), 
+    literacy = as.character(literacy),
+    educ = case_when(
+      educ %in% c("incomplete primary", "complete primary") ~ "Primary",
+      educ %in% c("incomplete secondary", "complete secondary") ~ "Secondary",
+      educ == "no education" ~ "None",
+      educ == "higher" ~ "Higher"),
+      educ = factor(educ, 
+                    levels = c("None", "Primary", "Secondary", "Higher")),
+    literacy = case_when(
+    literacy %in% c("cannot read at all", "able to read only parts of sentence", "no card with required language", "blind/visually impaired") ~ "Unable to read a whole sentence",
+    literacy == "able to read whole sentence" ~  "Able to read a whole sentence"))
+
+```
+
+```{r}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Tools  ----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# manual color scale for use later
+my_palette <- c("#98d8e3","#74cddb","#54B1BF","#288D9B","#006B78","#004A57", "#98d5e3")
+
+# manual number label for use later
+nb_comma <- scales::label_comma(accuracy = .1, big.mark = "'", decimal.mark = ",")
+
+```
+
+```{r }
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# First inspection of data  ----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Automatic inspection of data & completion of the dataset
+
+inspect_numerical_variables <- inspectdf::show_plot(inspectdf::inspect_num(ir)) +
+    labs(title = "Numerical varibables first inspection")
+
+inspect_categorical_variables<- inspectdf::show_plot(inspectdf::inspect_cat(ir)) +
+  labs(title = "Categorical varibables first inspection")
+```
+
+```{r}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## FONDAMENTAL VALUE ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Count number of respondent at at least 1 question
+# Add ' separator (I read on internet it's a "strange swiss habit" !)
+
+num_women_in_survey_asnum <- nrow(ir)
+num_women_in_survey <- scales::number(nrow(ir), big.mark = "'")
+```
+
+```{r}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## AGE. ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+## Number of answer 
+
+# Number of fill age field with the fancy ' 
+total_age_fill <- formatC(sum(!is.na(ir$age)), big.mark = "'")
+
+# Number of empty age field
+total_age_empty <- formatC(sum(is.na(ir$age)), big.mark = "'")
+
+
+## Dispersion of age
+
+# Age mean and standard deviation
+mean_sd_age <- 
+  ir %>% summarise(mean_age = round(mean(age), digits = 2), 
+                   sd_age = round(sd(age), digits = 2))
+
+# Age min
+mean_age <- mean(ir$age
+                 )
+# Age min
+min_age <- min(ir$age)
+
+# Age max
+max_age <- max(ir$age)
+
+## Age group histogram
+# Create tibble with number and proportion by age group  
+
+ir_age_group_n_pct <- ir %>%
+  count(age_group) %>%
+  mutate(
+    perc = round(proportions(n) * 100, 1),
+    res = str_c(scales::number(n, big.mark = "'"), "\n", " (", perc, "%)"),
+    age_group = as.factor(age_group)
+    )
+
+# Plot it with fancy labs and ' for separating thousands
+barchart_age_group <- ggplot(ir_age_group_n_pct, aes(age_group, n)) +
+  geom_col(fill = "#54B1BF") +
+  geom_text(aes(label = res), vjust = 1.5, colour = "white") +   
+  scale_y_continuous(labels = label_number(big.mark = "'")) +
+  labs(
+    x = "Age groups",
+    y = "number of women",
+    title = "Fig 1.a - Repartition of women by age group",
+    subtitle = sprintf(sprintf("N= %s, min= %.f ans, max= %.f ans, missing data= %s", total_age_fill, min_age, max_age, total_age_empty))) 
+
+
+# Boxplot of age
+boxplot_age <- ggplot(ir) +
+  aes(x = "", y = age) +
+  geom_boxplot(fill = "#54B1BF") +
+labs(
+    x= "",
+    y = "Age (years)",
+    title = "Fig 1.b - Boxplot of age ",
+    subtitle = sprintf(sprintf("N= %s, min= %.f ans, max= %.f ans, mean= %.f ans, missing data= %s", total_age_fill, min_age, max_age, mean_age, total_age_empty)))
+```
+
+```{r}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## EDUCATION ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+## Number of answer 
+
+# Number of fill age field
+total_educ_fill <- formatC(sum(!is.na(ir$educ)), big.mark = "'")
+
+# Number of empty age field
+total_educ_empty <- formatC(sum(is.na(ir$educ)), big.mark = "'")
+
+
+## Education level histogram
+# Create dataframe with number and proportion by education level  
+
+ir_educ_group_n_pct <- ir %>%
+  count(educ) %>%
+  mutate(
+    perc = round(proportions(n) * 100, 1),
+    res = str_c(scales::number(n, big.mark = "'"), "\n", " (", perc, "%)"),
+    educ = as.factor(educ)
+    )
+
+# Plot it with fancy labs and ' for separating thousands
+barchart_education <- ggplot(ir_educ_group_n_pct, aes(educ, n)) +
+  geom_col(aes(fill = educ)) +
+  scale_fill_manual(values = rev(my_palette)) +
+  geom_text(aes(label = res), vjust = 1.5, colour = "white") +   
+  scale_y_continuous(labels = label_number(big.mark = "'")) +
+  labs(
+    x = "education levels",
+    y = "number of women",
+    title = "Fig 2.a - Repartition of women by education level",
+    subtitle = sprintf(sprintf("N= %s, missing data= %s", total_educ_fill, total_educ_empty)))
+```
+
+```{r}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## LITERACY ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+## Number of answer 
+
+# Number of fill literacy level  field
+total_literacy_fill <- formatC(sum(!is.na(ir$literacy)), big.mark = "'")
+total_literacy_fill_as_num <- as.numeric(sum(!is.na(ir$literacy)))
+
+# Number of empty literacy level field
+total_literacy_empty <- formatC(sum(is.na(ir$literacy)), big.mark = "'")
+
+# Key data for text
+# 
+num_literacy <- ir %>% 
+  filter(literacy == "Able to read a whole sentence") %>%
+  nrow()
+
+pct_literacy <- (100 * num_literacy/num_women_in_survey_asnum) %>% round(digits = 1)
+
+## Literacy level histogram
+# Create dataframe with number and proportion by literacy level  
+
+literacy_group_n_pct <- ir %>%
+  count(literacy) %>%
+  mutate(
+    perc = round(proportions(n) * 100, 1),
+    res = str_c(scales::number(n, big.mark = "'"), "\n", " (", perc, "%)"),
+    literacy = as.factor(literacy)
+    )
+
+# Plot it with fancy labs and ' for separating thousands
+barchart_literacy <- ggplot(literacy_group_n_pct, aes(literacy, n)) +
+  geom_col(aes(fill = literacy)) +
+  scale_fill_manual(values = rev(my_palette)) +
+  geom_text(aes(label = res), vjust = 1.5, colour = "white") +   
+  scale_y_continuous(labels = label_number(big.mark = "'")) +
+  labs(
+    x = "literacy levels",
+    y = "number of women",
+    title = "Fig 3 - Repartition of women by literacy level",
+    subtitle = sprintf(sprintf("N= %s, missing data= %s", total_literacy_fill, total_literacy_empty)))
+```
+
+```{r eval=FALSE, include=FALSE}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## CONTRACEPTION KNOWLEDGE ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+## Number of answer 
+
+# Number of fill contraception knowledge field
+total_knowledge_contraception_fill_as_num <- (sum(!is.na(ir$knowledge_contraception)))
+
+# Number of empty contraception knowledge field
+total_knowledge_contraception_empty_as_num <- as.numeric(sum(is.na(ir$knowledge_contraception)))
+
+
+# N of women who have no contraception knowledge
+num_no_knowledge_contraception <- ir %>% 
+  filter(knowledge_contraception != "knows modern method") %>% 
+  nrow()
+
+# % of women who have no contraception knowledge
+pct_no_knowledge_contraception <- (100 * num_no_knowledge_contraception/num_women_in_survey_asnum) %>% round(digits = 1)
+
+## Contraception knowledge  histogram
+# Create dataframe with number and proportion by education level  
+
+knowledge_contraception_n_pct <- ir %>%
+  count(knowledge_contraception) %>%
+  mutate(
+    perc = round(proportions(n) * 100, 1),
+    res = str_c(scales::number(n, big.mark = "'"), "\n", " (", perc, "%)"),
+    knowledge_contraception = as.factor(knowledge_contraception)
+    )
+
+# Plot 
+barchart_knowledge_contraception <- 
+  ggplot(knowledge_contraception_n_pct, aes(knowledge_contraception, n)) +
+  geom_col(aes(fill = knowledge_contraception)) +
+  scale_fill_manual(values = rev(my_palette)) +
+  geom_text(aes(label = res), vjust = 1.5, colour = "white") +   
+  scale_y_continuous(labels = label_number(big.mark = "'")) +  
+  theme(legend.position = "none") +
+  labs(
+    x = "knowledge contraception (yes/no)",
+    y = "number of women",
+    title = "Fig 3 - Repartition of women by contraception knowledge",
+    subtitle = "N= 12'862, missing data= 0")
+
+# save the plot
+ggsave(barchart_knowledge_contraception,
+       filename = "barchart_knowledge_contraception.png")
+
+```
+
+```{r}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## LOCATION ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Urban vs rural location
+## Number of answer 
+
+# Number of fill knowledge_contraception field
+total_urban_rural_fill <- formatC(sum(!is.na(ir$urban_rural)), big.mark = "'")
+
+# Number of empty knowledge_contraception field
+total_urban_rural_empty <- formatC(sum(is.na(ir$urban_rural)), big.mark = "'")
+
+# N rural area
+num_rural <- ir %>% 
+  filter(urban_rural == "rural") %>% 
+  nrow()
+
+# % rural area
+pct_rural <- (100 * num_rural/num_women_in_survey_asnum) %>% 
+  round(digits = 1)
+
+# Table area
+table_ir_rural_urban <- ir %>% 
+  group_by(urban_rural) %>%
+  summarise(nombre = n()) %>%
+  mutate(Pourcentage = round(nombre / sum(nombre), 3)*100)
+```
+
+```{r}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## MARITAL STATUS ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ir_withpartenaire <- ir %>% 
+  filter(marital_status == "married" | marital_status =="living with partner") 
+
+# N married
+num_married <- ir_withpartenaire %>% 
+  nrow()
+
+# % married
+pct_married <- (100 * num_married/num_women_in_survey_asnum) %>% 
+  round(digits = 1)
+
+# N no longer married (widow / divorced )
+num_no_long_married <- ir %>% 
+  filter(marital_status == "widowed" | marital_status =="divorced" | marital_status =="no longer living together/separated") %>% 
+  nrow()
+
+# % no longer married (widow / divorced )
+pct_no_long_married <- (100 * num_no_long_married/num_women_in_survey_asnum) %>% 
+  round(digits = 1)
+
+# Table Marital status
+table_ir_marital_status <- ir %>% 
+  group_by(marital_status) %>%
+  summarise(nombre = n()) %>%
+  mutate(Pourcentage = round(nombre / sum(nombre), 3)*100)
+```
+
+```{r}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## DESIRE CHILDREN ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Number of women who don't want children 
+ir_dont_want_child <- ir %>% 
+  filter(desire_more_children =="wants no more")
+
+num_dont_want_child <- ir_dont_want_child %>% 
+  nrow()
+
+num_dont_want_child_bigmark <- formatC(sum(!is.na(ir$knowledge_contraception)), big.mark = "'")
+
+# % of women who don't want children 
+pct_dont_want_child <- (100 * num_dont_want_child/num_women_in_survey_asnum) %>%
+  round(digits = 1)
+
+## Marital status of women who don't want child
+table_dont_want_child_marital_status <- ir_dont_want_child %>% 
+  group_by(marital_status) %>%
+  summarise(nombre = n()) %>%
+  mutate(Pourcentage = round(nombre / sum(nombre), 3)*100)
+
+## Number of child of women who don't want child
+table_dont_want_child_number_child_alive <- ir_dont_want_child %>% 
+  group_by(num_child_alive) %>%
+  summarise(nombre = n()) %>%
+  mutate(Pourcentage = round(nombre / sum(nombre), 3)*100)
+
+
+## Age of women who don't want child
+
+Mean_age_dont_want_child <- mean(ir_dont_want_child$age)
+
+## Current contraception of women who don't want children
+table_dont_want_child_contraception_use <- ir_dont_want_child %>% 
+  group_by(current_contraception_grouped) %>%
+  summarise(nombre = n()) %>%
+  mutate(Pourcentage = round(nombre / sum(nombre), 3)*100)
+
+# Number of women who don't want children and use contraception
+num_dont_want_child_have_contraception <- ir_dont_want_child %>% 
+  filter(current_contraception_grouped !="no method")%>% 
+  nrow()
+
+# % of women who don't want children 
+pct_dont_want_child_have_contraception <- (100 * num_dont_want_child_have_contraception/num_dont_want_child) %>%
+  round(digits = 1)
+
+# Number of women who don't want children and use modern contraception
+num_dont_want_child_have_modern_contraception <- ir_dont_want_child %>% 
+  filter(current_contraception_grouped =="modern method")%>% 
+  nrow()
+
+# % of women who don't want children and use modern contraception
+pct_dont_want_child_have_modern_contraception <- (100 * num_dont_want_child_have_modern_contraception/num_dont_want_child) %>%
+  round(digits = 1)
+
+
+# Number of women who don't want children and use modern contraception
+num_dont_want_child_have_tradi_contraception <- ir_dont_want_child %>% 
+  filter(current_contraception_grouped =="traditional method")%>% 
+  nrow()
+
+# % of women who don't want children and use modern contraception
+pct_dont_want_child_have_tradi_contraception <- (100 * num_dont_want_child_have_tradi_contraception/num_dont_want_child) %>%
+  round(digits = 1)
+
+# Reason discontinuation_cont
+
+table_dont_want_child_number_no_contraception_reason <- ir_dont_want_child %>% 
+    filter(current_contraception_grouped =="no method")%>% 
+  group_by(reason_discontinuation_cont) %>%
+  summarise(nombre = n()) %>%
+  mutate(Pourcentage = round(nombre / sum(nombre), 3)*100)
+
+# Can ask condom
+
+table_dont_want_child_number_no_contraception_can_ask_condom <- ir_dont_want_child %>% 
+    filter(current_contraception_grouped =="no method")%>% 
+  group_by(can_ask_condom) %>%
+  summarise(nombre = n()) %>%
+  mutate(Pourcentage = round(nombre / sum(nombre), 3)*100)
+
+# Can refuse sex
+
+table_dont_want_child_number_no_contraception_can_refuse_sex <- ir_dont_want_child %>% 
+    filter(current_contraception_grouped =="no method")%>% 
+  group_by(can_refuse_sex) %>%
+  summarise(nombre = n()) %>%
+  mutate(Pourcentage = round(nombre / sum(nombre), 3)*100)
+
+```
+
+```{r eval=FALSE, include=FALSE}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## FAMILY PLANNING AND CONTRACEPTION USE ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Contraception use
+
+mini_ir_plan_fam_contracep <- ir %>%
+  select(current_contraception_grouped,desire_more_children)
+
+mini_ir_plan_fam_contracep <- 
+  mini_ir_plan_fam_contracep %>%  
+  mutate(
+      current_contraception_grouped = factor(current_contraception_grouped, 
+                    levels = c("no method",
+                               "folkloric method",
+                               "traditional method",
+                               "modern method")),
+            desire_more_children = factor(desire_more_children, 
+                    levels = c("wants within 2 year", 
+                               "wants after 2+ years",
+                               "wants, unsure timing",
+                               "can't have", 
+                               "undecided",
+                               "sterilized (respondent or partner)", 
+                               "declared infecund",
+                               "wants no more", 
+                               "never had sex")))
+
+
+family_plan_contraception <- mini_ir_plan_fam_contracep %>%
+  count(desire_more_children, current_contraception_grouped)
+
+alluvium_family_plan_contraception <- ggplot(data = family_plan_contraception,
+       aes(axis1 = desire_more_children, axis2 = current_contraception_grouped, y = n)) +
+  geom_alluvium(aes(fill = desire_more_children),curve_type = "cubic") +
+  geom_stratum() +
+  geom_text(stat = "stratum",
+            aes(label = after_stat(stratum))) +
+  scale_x_discrete(limits = c("Family planing", "Contraception utilisation"),
+                   expand = c(0.05, 0.05)) +
+    scale_fill_manual(values = rev(my_palette)) +
+  theme(legend.position = "none") + 
+  ggtitle("Fig. 3 - Contraception use and family planing")
+
+# save the plot
+ggsave(alluvium_family_plan_contraception,
+       filename = "alluvium_family_plan_contraception.png")
+```
+
+```{r}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## CHILD BORN ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Number of child alive
+# N women who ever had a child born
+num_with_child_born <- ir %>% 
+  filter(num_child_born > 0) %>% 
+  nrow()
+
+# % women who ever had a child born
+pct_with_child_born <- (100 * num_with_child_born/num_women_in_survey_asnum) %>%
+  round(digits = 1)
+
+# Mean number of child born
+mean_sd_child_born <- 
+  ir %>% summarise(mean_kids = round(mean(num_child_born), digits = 2), 
+                   sd_kids = round(sd(num_child_born), digits = 2))
+
+# Table number of child born
+table_ir_child_born<- ir %>% 
+  group_by(num_child_born) %>%
+  summarise(nombre = n()) %>%
+  mutate(Pourcentage = round(nombre / sum(nombre), 3)*100)
+```
+
+```{r}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## CHILD ALIVE ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Number of child alive
+# N women who ever had a child alive
+num_with_child_alive <- ir %>% 
+  filter(num_child_alive > 0) %>% 
+  nrow()
+
+# % women who ever had a child alive
+pct_with_child_alive <- (100 * num_with_child_alive/num_women_in_survey_asnum) %>%
+  round(digits = 1)
+
+# Mean number of child alive
+mean_sd_child_alive <- 
+  ir %>% summarise(mean_kids = round(mean(num_child_alive), digits = 2), 
+                   sd_kids = round(sd(num_child_alive), digits = 2))
+
+# Table number of child alive
+table_ir_child_alive <- ir %>% 
+  group_by(num_child_alive) %>%
+  summarise(nombre = n()) %>%
+  mutate(Pourcentage = round(nombre / sum(nombre), 3)*100)
+
+```
+
+# Dataset description
+
+The dataset we used in this report is a subset of the **Demographic and Health Surveys (DHS)**. The DHS are a serie of standardized surveys conducted periodically in developing countries that collect data on various aspects of population, health, and nutrition. These surveys, which are funded by the United States Agency for International Development (USAID), are a gold-standard source of reliable public health data for many countries and international bodies.
+
+The dataset we used in the report is called *women's recode dataset*. It contain individual-level data on women aged 15 to 49 in the surveyed households, from Nepal, collected in 2018.
+
+This report focus on family planning in Nepal, in a women perseptive.
+
+The women's recode dataset contains `r num_women_in_survey` women, aged from `r min_age` to `r max_age` (figure 1.a & 1.b ) ; Half of them have an secondary education or highter (figure 2.a), and `r pct_literacy` % are able to read whole sentence (figure 2.b). Two third of the datasets is located in an urban area.
+
+```{r}
+barchart_age_group
+
+boxplot_age
+```
+
+`r pct_married`% are married/living with partner (n= `r num_married`), `r pct_no_long_married`% are no longer married (divorced, separated, widowed) (n= `r num_no_long_married`), and `r pct_with_child_born`% (n= `r num_with_child_born`) ever had at least 1 child.
+
+```{r}
+
+barchart_education
+
+barchart_literacy
+
+```
+
+# Knowledge contraception
+
+Allmost all of the `r num_women_in_survey` women has knowledge of at least 1 modern contraceptive method. Only 0.1% of them has no knowledge on modern contraceptive method (fig. 3).
+
+![](barchart_knowledge_contraception.png)
+
+
+# Child desire
+
+Based on this dataset, knowledge contraception is not a main issue. Nonetheless, among the `r num_dont_want_child_bigmark` (`r pct_dont_want_child` % of the dataset) women who don't want to have children, only `r pct_dont_want_child_have_contraception`% use a contraceptive method (`r pct_dont_want_child_have_modern_contraception` % modern contraception, `r pct_dont_want_child_have_tradi_contraception` % traditional contraception).
+
+As we see in figure 4, all women who don't want child anymore don't use a contraception method, but the reason remain unclear.
+
+![](alluvium_family_plan_contraception.png)

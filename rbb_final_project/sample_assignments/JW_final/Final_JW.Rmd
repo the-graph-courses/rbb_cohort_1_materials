@@ -1,0 +1,357 @@
+---
+title: "Final Project - Violence against women in Nigeria"
+subtitle: "Findings from the 2018 Demographic and Health Survey"
+author: "Julia Waibel"
+date: "`r Sys.Date()`"
+output: prettydoc::html_pretty
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F, warning = F, message = F)
+```
+
+```{r packages-and-plots, data}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## Packages ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+if(!require(pacman)) install.packages("pacman")
+pacman::p_load(
+  janitor, # data analysis utilities
+  here, # force rmds to use the project folder as working directory
+  haven, # for reading in stata files
+  scales, # for the comma() function, among others
+  ggstatsplot, # for pie charts
+  patchwork, # combining plots
+  tidyverse # for everything!
+)
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ggplot2 palette  ----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# manual color scale for use later. 
+# Got the scale for this website: # https://mycolor.space/?hex=%2354B1BF&sub=1
+my_palette <- c("#98d8e3","#74cddb","#54B1BF","#288D9B","#006B78","#004A57","#86A8E7")
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Import and process data  ----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# IR stands for individual recode
+ir_raw <- haven::read_dta(here("data/NGIR7BFL.DTA"),
+                          # col_select is used to avoid importing the entire dataset, 
+                          # which is very large
+                          col_select = c(caseid, v012, v022, v013, v024, v190, v531, 
+                                         v006, v007, v009, v010, v025, v044, 
+                                         d104, d106, d107, d108, d109, d111, 
+                                         d115k, d115l, d115b, d115c, d116, d117a, 
+                                         d120, v020, v501, g100, g102, g103, g104, g105, g106, g107, g119))
+                          
+# create dataset
+ir <- 
+  ir_raw %>% 
+  
+  # rename the needed variables
+  rename(id = caseid,
+         age = v012, 
+         state = v022,
+         age_group = v013, 
+         region = v024, 
+         wealth_index = v190, 
+         age_first_sex = v531, 
+         mth_interview = v006, 
+         yr_interview = v007, 
+         mth_birth = v009, 
+         yr_birth = v010, 
+         urban_rural = v025,
+         selected_violence = v044,
+         emotional_vio = d104,
+         less_physic_vio = d106,
+         severe_physic_vio = d107,
+         sexual_vio = d108,
+         first_vio = d109,
+         husband_action = d111,
+         boyfriend_hurt = d115k,
+         former_bf_hurt = d115l,
+         mother_hurt = d115b,
+         father_hurt = d115c,
+         person_most_hurt = d116,
+         freq_hit = d117a,
+         reason_no_help = d120,
+         ever_married = v020,
+         marital_status = v501,
+         ever_heard_circum = g100,
+         circumcised = g102,
+         flesh_removed = g103,
+         ga_nicked = g104,
+         ga_sewn = g105,
+         age_circum = g106,
+         person_circum = g107,
+         circum_should_stop = g119) %>% 
+  
+  # convert from labelled data to regular factors
+  haven::as_factor()
+
+```
+
+```{r violence, results='hide'}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## Domestic violence ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+num_women_in_survey <- nrow(ir) 
+# there are 41,821 women included
+num_selected <- ir %>% filter(selected_violence == "woman selected and interviewed") %>% nrow() 
+# there are 10,678 women interviewed for the domestic violence module 
+exp_viol <- ir %>% filter(emotional_vio == "yes" | less_physic_vio == "yes" | severe_physic_vio == "yes" | sexual_vio == "yes") %>% nrow() 
+# 3,373 women experienced some sort of violence
+violence <- (100 * exp_viol/num_selected) %>% round(digits = 1)
+# which represents 31.6% of Nigerian women interviewed
+
+# create sub data sets to facilitate data wrangling and analysis. We don´t need the FGM-related variables yet
+sel <- ir %>% 
+   filter(selected_violence == "woman selected and interviewed") %>%
+  mutate(violence = case_when(emotional_vio == "yes" | less_physic_vio == "yes" | severe_physic_vio == "yes" | sexual_vio == "yes" ~ "yes", TRUE ~ "no")) %>%
+  select(!ever_heard_circum:circum_should_stop)
+
+# sub data set with only those women included who experienced domestic violence, check summary statistics
+viol <- sel %>% filter(violence == "yes")
+
+mean_sd_age <- sel %>% 
+  group_by(violence) %>%
+  summarise(mean_age = round(mean(age), digits = 1), 
+                   sd_age = round(sd(age), digits = 1))
+# those not having experienced domestic violence are younger. 29 (9.3) vs. 31.7 (8.1). This can be visualized through a bar chart.
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## PLOT 1: Prevalence across regions ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+dv_age <- ggplot(sel) +
+  aes(x = age_group, fill = violence, group = violence) +
+  geom_bar(position = "dodge") +
+  labs(
+    x = "age group",
+    y = "count",
+    title = "distribution of domestic violence status across age groups"
+  ) +
+  scale_fill_manual(
+    values = c(no = "#004A57",
+    yes = "#86A8E7")
+  ) +
+  theme_minimal()
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## PLOT 2: Prevalence across regions ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# plotting sample characteristics
+gg1a <- viol %>% 
+  count(region) %>% 
+  mutate(pct = 100 * n/sum(n),
+       pct = round(pct, digits = 0), 
+       pct = as.character(pct),
+       pct = if_else(pct <1, "<1", pct),
+       pct = paste0(pct, "%")) %>% 
+  ggplot(aes(x = region, y = n)) + 
+  geom_col(fill = "#006B78")  +
+  geom_text(aes(y = n + 200,
+                label = pct),
+            size = 3, 
+            fontface = "bold") +
+  labs(x = "Regions in Nigeria", y = "Frequency count of domestic violence") +
+  theme_classic() +
+  theme(plot.margin = margin(t = 10,  # Top margin
+                             r = 20,  # Right margin
+                             b = 10,  # Bottom margin
+                             l = 10))
+# --> over 50% of the women who experienced violence live in the northern parts of the country. Need to check general distribution of regions in whole sample for comparison
+
+
+gg1b <- sel %>% 
+  count(region) %>% 
+  mutate(pct = 100 * n/sum(n),
+       pct = round(pct, digits = 0), 
+       pct = as.character(pct),
+       pct = if_else(pct <1, "<1", pct),
+       pct = paste0(pct, "%")) %>% 
+  ggplot(aes(x = region, y = n)) + 
+  geom_col(fill = "#004A57")  +
+  geom_text(aes(y = n + 200,
+                label = pct),
+            size = 3, 
+            fontface = "bold") +
+  labs(x = "Regions in Nigeria", y = "Frequency count of respondents") +
+  theme_classic() +
+  theme(plot.margin = margin(t = 10,  # Top margin
+                             r = 10,  # Right margin
+                             b = 10,  # Bottom margin
+                             l = 20)) # Left margin)
+
+# Combine plot
+gg1 <- 
+  patchwork::wrap_plots(gg1b,
+                        gg1a,
+                        ncol = 2) + 
+  plot_annotation(tag_levels = 'a')
+
+# --> distribution shows similar shape, but there are significant differences. north east and north central regions show to have higher proportion of women who experienced domestic violence
+
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## PLOT 3: PERPETRATOR ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# create composite variable for perpetrator. Caution: note hierarchy of commands for case_when
+viol <- viol %>% mutate(person = case_when((mother_hurt == "yes" | father_hurt == "yes") & (former_bf_hurt == "yes" | boyfriend_hurt == "yes") ~ "parent and partner",
+                                           mother_hurt == "yes" & father_hurt == "yes" ~ "both parents",
+                                           former_bf_hurt == "yes" & boyfriend_hurt == "yes" ~ "partners",
+                                           mother_hurt == "yes" ~ "mother",
+                                           father_hurt == "yes" ~ "father",
+                                           former_bf_hurt == "yes" ~ "former partner",
+                                           boyfriend_hurt == "yes" ~ "current partner"))
+
+# check what´s the percentage of the mother being the person who mostly hurt the women 
+table(viol$person)
+p_n <- viol %>% filter(person != "NA") %>% nrow()
+perp <- viol %>% filter(person=="mother") %>% nrow()
+mother <- (100 * perp/p_n) %>% round(digits = 1) # 44%
+
+# create pie chart to display percentages, by urban-rural region 
+gg2 <- ggpiestats(
+  data = viol,
+  x = person,
+  y = urban_rural,
+  title = "Percent of people by whom women have expierenced violence",
+  results.subtitle = F) +
+  theme_void() +
+  labs(fill = "Perpetrator") +
+    theme(axis.line.x.bottom = element_blank(), 
+        legend.position = "right") +
+  scale_fill_manual(values = c("#BEA5AA", "#98d8e3", "#A3ABBD", "#506C95", "#3F4756", "#6263AC", "#006B78"))+
+  guides(fill = guide_legend(reverse=T)) 
+# --> rank of people mostly hurting women differ between rural and urban areas. 
+
+```
+
+```{r female genital mutilation, results='hide'}
+# base number consists of those who answered to "ever heard of female circumcision"
+# basic summary statistics
+FGM <- ir %>% select(!emotional_vio:reason_no_help) %>% 
+  filter(ever_heard_circum=="yes" | ever_heard_circum=="no") 
+
+table(FGM$ever_heard_circum) # 26,585 women answered this question
+n_heard_circum <- 15512/26585*100 # 58% women have heard of circumcision
+15512/41821*100 # 37.1% it is when applying to whole sample including missings
+
+table(FGM$circumcised) 
+n_circum <- 4788/26585*100 #18% are circumcised
+
+# create variable for FGM type
+type <- FGM %>% filter(circumcised=="yes") %>%
+  mutate(type = case_when(flesh_removed == "yes" ~ "flesh removed",
+                                        ga_nicked == "yes" ~ "genital area nicked",
+                                        ga_sewn == "yes" ~ "sewn closed")) %>%
+  select(type)
+
+flesh <- type %>% filter(type=="flesh removed") %>% nrow()
+type_n <- nrow(type)
+flesh_p <- (100 * flesh/type_n) %>% round(digits = 1)
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## PLOT 4: FGM types----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# horizontal bar chart to show distribution of FGM types
+gg3 <- type %>% 
+  count(type) %>% 
+  mutate(pct = 100 * n/sum(n),
+       pct = round(pct, digits = 0), 
+       pct = as.character(pct),
+       pct = if_else(pct <1, "<1", pct),
+       pct = paste0(pct, "%")) %>% 
+  ggplot(aes(x = type, y = n)) + 
+  geom_col(fill="#006B78") +
+  coord_flip() +
+  geom_text(aes(y = n + 200,
+                label = pct),
+            size = 3, 
+            fontface = "bold") +
+  labs(x = "type of FGM", y = "count (prevalence)") +
+  theme_classic() 
+
+# who performed the circumcision?
+table(FGM$person_circum, useNA = "always")
+levels(FGM$person_circum)
+circum_perf <- FGM %>% filter(person_circum=="health professional"  | person_circum=="trained nurse/midwife" | person_circum=="traditional" | person_circum=="traditional birth attendant" | person_circum=="traditional \"circumciser\"" | person_circum=="other traditional" | person_circum=="doctor" | person_circum=="other health professional" | person_circum=="don't know") %>% nrow()
+circum_perf
+trad <- FGM %>% filter(person_circum=="traditional \"circumciser\"") %>% nrow()
+trad_p <- (100 * trad/circum_perf) %>% round(digits = 1)
+trad2 <- FGM %>% filter(person_circum=="trained nurse/midwife") %>% nrow()
+trad2_p <- (100 * trad2/circum_perf) %>% round(digits = 1)
+trad3 <- FGM %>% filter(person_circum=="traditional birth attendant") %>% nrow()
+trad3_p <- (100 * trad3/circum_perf) %>% round(digits = 1)
+doctor <- FGM %>% filter(person_circum=="doctor") %>% nrow()
+doctor_p <- (100 * doctor/circum_perf) %>% round(digits = 1)
+
+# additional information: age at circumcision
+table(FGM$age_circum)
+sex_circum <- FGM %>% filter(circumcised=="yes")
+table(sex_circum$age_first_sex)
+age_c <- FGM %>% filter(age_circum=="during infancy") %>% nrow()
+age_c_p <- (100 * age_c/circum_perf) %>% round(digits = 1)
+
+```
+
+# Domestic violence
+
+Across the `r comma(num_women_in_survey)` surveyed women (age 15 to 49), `r comma(num_selected)` were selected for the domestic violence interview, and `r violence`% experienced domestic violence.
+
+```{r fig.height = 5}
+#| fig.cap = "Presence of domestic violence among women by age group"
+dv_age
+```
+
+Figure 1 shows the prevalence of domestic violence against Nigerian women across different age groups.
+
+The mean age of women not having experienced domestic violence is 29 (Standard Deviation 9.3) years. Hence, they are younger than the group of women who are victims of domestic violence (mean age 31.7, Standard Deviation 8.1 years).
+
+### **Experiences of violence differs by region**
+
+```{r fig.height = 6, fig.width = 12}
+#| fig.cap = "Distribution of regions represented"
+gg1
+```
+
+Figure 2 consists of two plots with a) showing the respresentativeness of regions in the sample of Nigerian women responding to the violence module, and b) showing the regions the women reporting to have experienced domestic violence are from.  Comparing those two plots might stress differences in prevalence of domestic violence across regions in Nigeria.
+
+### **Perpetrator**
+
+In this sample, across the `r comma(p_n)` women responding to the question, the victim´s mother (`r mother`%) seem to be the person mostly responsible for domestic violence
+
+```{r fig.height = 4, fig.width = 10}
+#| fig.cap = "Perpetrator"
+gg2
+```
+
+Figure 3 shows differences between urban and rural areas with regards to the person who hurt the women in the survey most. In both regions, the mother remains to be the most frequent perpetrator, followed by both parents, and the father in urban and rural areas, respectively.
+
+# Female genital mutilation
+
+In this sample, `r comma(n_heard_circum)`% of women have ever heard of female circumcision, and `r comma(n_circum)`% reported to be circumcised.
+
+In the majority of cases, the person who has performed the circumcision, is a "traditional circumciser" (`r comma(trad_p)`%). Significantly less women reported to have been circumcised by a trained nurse/midwife (`r comma(trad2_p)`%), a traditional birth attendant (`r comma(trad3_p)`%), or a doctor (`r comma(doctor_p)`%).
+
+```{r fig.height = 4, fig.width = 10}
+#| fig.cap = "Types of circumcision"
+gg3
+```
+
+Figure 4 shows the prevalence of different types of female genital mutilation. In most cases of valid answers regarding type of circumcision, the flesh was removed (`r comma(flesh_p)`%).
+
+### **Age at circumcision among Nigerian women**
+
+Many women reported female genital mutilation happening to them during infancy without specifying the age (`r comma(age_c_p)`%). However, among those reporting it, the age of circumcision acts ranges from 0 to 46 years.
