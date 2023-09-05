@@ -1,0 +1,457 @@
+---
+title: "Understanding Domestic Violence: A Study on Abuse Among Jordanian Woman"
+subtitle: "RBB Final Project"
+author: "Aya El Sammak"
+date: "August 08, 2023"
+output:
+  html_document:
+    theme: cosmo
+    toc: TRUE
+    number_sections: TRUE
+    fig_caption: yes
+editor_options: 
+  chunk_output_type: inline
+---
+
+<style>   
+p.caption {
+  font-size: 0.8em;
+}
+</style>
+
+```{r echo = F}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+```
+
+
+```{r}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#          IMPORTING DATA AND PREPARING THE FILE
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#Load necessary packages
+pacman::p_load(
+  janitor, #data analysis utilities
+  here, #to force R to use project folder as working directory      
+  haven, #to read STATA .dta files    
+  tidyverse, #for everything (including data manipulation)
+  ggstatsplot, #for pie charts
+  cowplot,
+  ggpubr  #patch several plots together
+)
+
+#Import the .dta file
+jo_dhs_raw <- 
+  haven::read_dta(here("data/JOIR74FL.DTA"),
+                  col_select = c(
+                    # Basic information
+                    v012, v102, v106, v190a, v701,             
+                    # Knowledge and use of contraception
+                    v301, v313,  v212,
+                    # Domestic violence
+                    d106, d107, d108, d104, v044, d111
+                    ))
+
+#Rename the variables
+jo_dhs_renamed <-  jo_dhs_raw %>% 
+  rename(residence = v102,
+         age = v012,
+         educ = v106,
+         wealth_i = v190a,
+         know_c_method = v301,
+         use_c_method = v313,
+         h_educ = v701,
+         severe_pv = d107,
+         less_severe_pv = d106,
+         sexual_v = d108,
+         emotional_v = d104,
+         injury_pv = d111,
+         selected_dv = v044,
+         age_at_1st_birth = v212
+         )
+
+#Transform all variables into regular R factors
+jo_dhs_clean <- 
+  jo_dhs_renamed %>% 
+  haven::as_factor()
+
+#Generate new variables:
+  jo_dhs_clean2 <-  jo_dhs_clean %>% 
+    mutate(educ_cat3 =
+          #to create a new var for respondent's educ with 3 instead of 4 categories
+             case_when(educ == 'primary' ~ "Primary/No education",
+                       educ == 'no education' ~ "Primary/No education",
+                       educ == 'secondary' ~ "Secondary education",
+                       educ == 'higher' ~ "Higher education"), 
+           h_educ_cat3 =
+             #to create a new var for h_educ with 3 instead of 4 categories
+             case_when(h_educ == 'primary' ~ "Primary/No education",
+                       h_educ == 'no education' ~ "Primary/No education",
+                       h_educ == 'secondary' ~ "Secondary education",
+                       h_educ == 'higher' ~ "Higher education"),
+           wealth_i_cat3 =
+             #to create a new var for wealth_i with 3 instead of 5 categories
+             case_when(wealth_i == 'poorest' ~ "Poor/poorest",
+                       wealth_i == 'poorer' ~ "Poor/poorest",
+                       wealth_i == 'middle' ~ "Middle",
+                       wealth_i == 'richer' ~ "Rich/richest",
+                       wealth_i == 'richest' ~ "Rich/richest"),
+           physical_v = 
+            #to create a new var for women that experienced physical violence
+             case_when(severe_pv == "yes" ~ "yes",
+                       less_severe_pv == "yes" ~ "yes",
+                       TRUE ~ "no"),
+          exp_any_violence = 
+             #to create a new var for women that experiences any type of violence
+             case_when(emotional_v == "yes" ~ "Yes",
+                       physical_v == "yes" ~ "Yes",
+                       sexual_v == "yes" ~ "Yes",
+                       TRUE ~ "No"))
+    
+```
+
+
+
+```{r}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#          Understanding data: DOMESTIC VIOLENCE
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#Calculating total number of women in the survey:
+  total_women_survey <- nrow(jo_dhs_clean2) #14,689 women included in the survey
+
+#Filtering only the women who have been interviewed for the domestic violence module
+  total_women_dv_selected <- jo_dhs_clean2 %>% 
+    filter(selected_dv == "woman selected and interviewed") %>% 
+    nrow()  #6,852 women were selected for the domestic violence module
+  
+#Identifying the number of women who have experienced any form of violence:
+  exp_violence <- jo_dhs_clean2 %>% 
+    filter(emotional_v == "yes" | sexual_v == "yes" |
+             physical_v == "yes") %>% 
+    nrow() #1,542 women experience some sort of violence
+  
+#Identifying the number of women who have been injured as a result of abuse: 
+ exp_injury <- jo_dhs_clean2 %>% 
+    filter(injury_pv == "yes") %>% 
+    nrow()
+  #273 women were injured (bruised, wounded, burned, etc.)
+  
+#This means that:
+  pct_violence <- (100 * exp_violence/total_women_dv_selected) %>% 
+    round(digits = 1) 
+  # Plot 1a: Pie chart displaying the proportion of women in the dataset that have experienced some form of domestic violence
+p1a_women_dv  <- total_women_dv_selected <- jo_dhs_clean2 %>% 
+    filter(selected_dv == "woman selected and interviewed")  %>% 
+  ggstatsplot::ggpiestats(
+    x = exp_any_violence,
+    title = "Understanding Domestic Violence: Women's Incidence Rates",
+    subtitle = "Data from domestic violence module participants (n = 6,852).
+    ",
+    results.subtitle = F, #turn off statistical tests
+    legend.title = "Experienced violence" 
+    ) +
+  theme(axis.line.x.bottom = element_blank(), 
+        legend.position = "right"
+        ) +
+  scale_fill_manual(values = c("#E5625E","#ABE188")) +
+  theme_void()
+
+#22.5% of Jordanian women interviewed experience some sort of violence.
+
+ #And:
+  pct_injury <-  (100* exp_injury/exp_violence) %>% 
+    round(digits = 1)
+  
+  # Plot 1b: Pie chart displaying the proportion of women in the dataset that have been injured as a result of domestic violence
+p1b_injury <-  total_women_dv_selected <- jo_dhs_clean2 %>% 
+    filter(exp_any_violence == "Yes")  %>% 
+  ggstatsplot::ggpiestats(
+    x = injury_pv,
+    title = "Understanding Domestic Violence: Women's Injury Incidence Rates",
+    subtitle = "Data from domestic violence module participants (n = 6,852)
+    ",
+    results.subtitle = F, #turn off statistical tests
+    legend.title = "Sustained injuries" 
+    ) +
+  theme(axis.line.x.bottom = element_blank(), 
+        legend.position = "right"
+        ) +
+  scale_fill_manual(values = c("#E5625E","#ABE188")) +
+  theme_void()
+
+#17.7% of Jordanian women who have experienced some form of violence, have also been injured as a result of the violence.
+```
+
+# - Results of DHS Survey on Domestic Violence Against Women
+
+## Background
+The purpose of this report is to present the outcomes of a DHS survey, with a specific focus on women who were selected and interviewed for the domestic violence module. Out of the total number of women surveyed 
+(**14,689**), a subset of them (**6,852**) participated in the module
+
+The findings indicate that a significant number of women (**1,542**) have experienced various forms of violence such as **physical, emotional**, and **sexual abuse**. This suggests that at least **22.5%** of women are victims of domestic violence.
+
+```{r fig.height = 4, width = 4}
+#| fig.cap = "Figure 1a: Pie chart displaying the proportion of women that have experienced some form of domestic violence."
+p1a_women_dv
+```
+
+Among the women who experienced violence, a considerable portion (**273**) suffered injuries as a consequence of the abuse. The pie chart provides a visual representation of this finding, demonstrating that **18%** of women have endured injuries such as bruises, wounds, burns, or other similar harm.
+
+```{r fig.height = 4, width = 4}
+#| fig.cap = "Figure 1b: Pie chart displaying the proportion of women that have been injured as a result of domestic violence."
+p1b_injury
+```
+### Types of domestic violence among abused women
+
+
+```{r}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#          Visualizing data: DOMESTIC VIOLENCE
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#Proportions of types of abuse among women who have been subjected to domestic violence
+p2_women_dv_emotional <- total_women_dv_selected <- jo_dhs_clean2 %>% 
+    filter(exp_any_violence == "Yes") %>% 
+    ggstatsplot::ggpiestats(
+    x = emotional_v,
+    subtitle = "% of emotional abuse",
+    results.subtitle = F,
+    legend.title = "Experienced violence"
+    ) +
+  theme(axis.line.x.bottom = element_blank(), 
+        legend.position = "right",) +
+        scale_fill_manual(values = c("#E5625E","#ABE188")) +
+  theme_void()
+
+
+p2_women_dv_sexual <- total_women_dv_selected <- jo_dhs_clean2 %>% 
+    filter(exp_any_violence == "Yes") %>% 
+    ggstatsplot::ggpiestats(
+    x = sexual_v,
+    subtitle = "% of sexual abuse",
+    results.subtitle = F,
+    legend.title = "Experienced violence"
+    ) +
+  theme(axis.line.x.bottom = element_blank(), 
+        legend.position = "right") +
+        scale_fill_manual(values = c("#E5625E","#ABE188")) +
+  theme_void()
+
+p2_women_dv_physical <- total_women_dv_selected <- jo_dhs_clean2 %>% 
+    filter(exp_any_violence == "Yes") %>% 
+    ggstatsplot::ggpiestats(
+    x = physical_v,
+    results.subtitle = F,
+    subtitle = "% of physical abuse",
+    legend.title = "Experienced violence"
+    ) +
+  theme(axis.line.x.bottom = element_blank(), 
+        legend.position = "right",) +
+        scale_fill_manual(values = c("#E5625E","#ABE188")) +
+  theme_void()
+
+p2 <- ggarrange(p2_women_dv_emotional, 
+             p2_women_dv_sexual,
+             p2_women_dv_physical,
+             ncol = 3,
+             common.legend = TRUE,
+             legend = "bottom") %>% 
+  annotate_figure(top = text_grob("Prevelance of Different Types of Abuse in Women Experiencing Domestic Violence", 
+               color = "#202C59", face = "bold", size = 13))
+
+#Emotional abuse is the most prevalent among the three types of abuse, with rates reaching 80%. This is followed by high rates of physical abuse (66%).
+```
+
+Emotional abuse is the most prevalent among the three types of abuse, with rates reaching as high as **80%**. This is followed by high rates of physical abuse (**66%**).
+
+```{r fig.height = 4, width = 4}
+#| fig.cap = "Figure 2: Proportions of types of abuse women have been subjected to."
+p2 
+```
+
+```{r}
+#Plot 3: Prevalence of domestic violence across the type of place of residence
+p3_women_dv_residence  <- total_women_dv_selected <- jo_dhs_clean2 %>% 
+    filter(selected_dv == "woman selected and interviewed") %>% 
+    ggplot(mapping = aes(x= residence,
+                         fill = exp_any_violence)) +
+  geom_bar(color = "black",
+           position = "dodge") +
+  ggtitle("Domestic Violence: Comparing Urban and Rural Women's Experiences", "Data from domestic violence module participants (n = 6,852)") +
+  labs(fill = "Experienced violence", x = "Region") +
+  theme(legend.position = "right") +
+  scale_fill_manual(values = c("#E5625E","#ABE188")) +
+      theme_light()
+
+#Respondents living in urban areas were more likely to be abused than those living in rural areas.
+
+#Plot 4: Prevalence of domestic violence across husbands' varying educational levels
+p4_women_dv_heduc <- total_women_dv_selected <- jo_dhs_clean2 %>% 
+    filter(selected_dv == "woman selected and interviewed") %>% 
+    drop_na(h_educ_cat3) %>% 
+    ggplot(mapping = aes(x= factor(h_educ_cat3, level = c('Primary/No education', 'Secondary education', 'Higher education')), #to order the x-axis the way that makes sense
+                         fill = exp_any_violence)) +
+  geom_bar(color = "black",
+           position = "dodge") +
+  ggtitle("Prevalence of Domestic Violence According to Husbands' Educational Levels", "Data from domestic violence module participants (n = 6,852)") +
+  labs(fill = "Experienced violence", x = "Husband's level of education") +
+  theme(legend.position = "right") +
+  scale_fill_manual(values = c("#ABE188", "#E5625E")) +
+      theme_light()
+ #Men with higher education were more abusive towards their wives, however, men with secondary-level education are the most likely to cause abuse. 
+
+#Plot 5: Prevalence of domestic violence across varying educational levels
+p5_women_dv_wealth <- total_women_dv_selected <- jo_dhs_clean2 %>% 
+    filter(selected_dv == "woman selected and interviewed") %>% 
+    ggplot(mapping = aes(x= factor(wealth_i_cat3, level = c('Poor/poorest', 'Middle', 'Rich/richest')),
+                          fill = exp_any_violence)) +
+  geom_bar(color = "black",
+           position = "dodge") +
+  ggtitle("Prevalence of Domestic Violence by Wealth Index Among Women", "Data from domestic violence module participants (n = 6,852)") +
+  labs(fill = "Experienced violence", x = "Wealth index") +
+  theme(legend.position = "right") +
+  scale_fill_manual(values = c("#ABE188", "#E5625E")) +
+      theme_light()
+ #Women residing in the poor/poorest households were more abused than the middle and rich/richer households.
+```
+
+## Analysis
+### Domestic violence vs region
+
+After looking at the data in more depth, it appears as though respondents residing  in urban regions experience a higher likelihood of abuse compared to those living in rural areas. 
+
+```{r fig.height = 4, width = 4}
+#| fig.cap = "Figure 3: Prevalence of domestic violence according to the type of place of residence of the respondents."
+p3_women_dv_residence
+```
+
+The higher incidence of abuse in urban areas can be linked to the possibility that city environments may worsen existing tensions and create conditions that lead to more abuse, unlike the smaller and supportive communities commonly found in rural regions.
+
+### Domestic violence vs husbands' educational levels
+
+The figure below indicates that there is a correlation between higher levels of education among men and increased abusive behavior towards their wives, with secondary-level education displaying the highest likelihood of abuse. 
+
+```{r fig.height = 4, width = 4}
+#| fig.cap = "Figure 4: Prevalence of domestic violence across respondents' husbands' varying educational levels."
+p4_women_dv_heduc
+```
+
+One possible reason for this trend could be that men with higher education might feel a sense of superiority or entitlement, leading to a higher likelihood of abusive tendencies. 
+
+
+### Domestic violence vs wealth index 
+
+Figure 4 displays how incidences of abuse were higher among women living in the poorest households compared to those in the middle and wealthier households. 
+
+```{r fig.height = 4, width = 4}
+#| fig.cap = "Figure 5: Prevalence of domestic violence by wealth index among women."
+p5_women_dv_wealth
+```
+
+This could be due to the presence of higher levels of financial stress and economic hardships in poorer households. 
+
+
+```{r}
+# Plot 6 = Median age of women by different types of abuse and grouped by their educational level
+p6_abuse_per_educ <- jo_dhs_clean2 %>% 
+  group_by(educ) %>% 
+  summarise(
+    median_age_emotional_v = median(age, na.rm = T),
+    median_age_physical_v = median(age, na.rm = T),
+    median_age_sexual_v = median(age, na.rm = T)) %>% 
+  # Pivot short to long
+  pivot_longer(c(2:4)) %>% 
+  ggplot() + 
+  geom_col(aes(x = name, 
+               y = value, 
+               fill = educ),
+           position = "dodge") + 
+  coord_flip() +
+  geom_text(aes(x = name, 
+                y = value - 1.2, 
+                group = educ, 
+                label = value), 
+            size = 3, 
+            fontface = "bold", 
+            color = "#5D675B",
+            position = position_dodge(width = 0.9)) +
+  scale_fill_manual(values = c("#F7EF99", "#F1BB87", "#F78E69", "#DBF4A7")) + 
+  scale_x_discrete(labels = c("Median age experienced \nemotional abuse", 
+                              "Median age experienced \nphysical abuse", 
+                              "Median age experienced \nsexual abuse")) +
+  scale_y_continuous(expand = c(0, 0), # prevent expansion of scale
+                     limits = c(0, 45)) + # expand scale to prevent clipping of labels
+  labs(title = "Median ages of women abused across their educational level", 
+       x = "", y = "Age (years)", fill = "Women's educational status")  +
+  theme_classic()
+
+#The median age of women with higher education was lower than that of women with lower to no education. This can be explained by many reasons, however, to highlight a few:
+# - Women with higher education may be more capable of identifying abuse due to their knowledge and experience.
+# - Median age of women with lower education is higher and it could be due to the fact that after haven been abused for many years, she would have gained the knowledge to identify and address abuse
+# Of note, women with higher education may understand the severity of her case and report to the necessary authorities. However, women with a lower education may not have the luxury or means to voice her concerns. 
+```
+
+### Median age of abused women across different educational levels
+
+The data suggests that abused women with higher education tend to be younger on average than those with lower or no education. 
+
+```{r fig.height = 4, width = 4}
+#| fig.cap = "Figure 5: Median age of women by different types of abuse and grouped by their educational level."
+p6_abuse_per_educ
+```
+
+Several reasons can explain this difference, including the fact that women that have had the luxury of education may be more capable of recognizing and addressing abuse. They are more likely to grasp the severity of their situation and report abuse to the appropriate authorities. On the other hand, the higher median age among women with lower education could be attributed to the years of enduring abuse, leading to a gradual accumulation of knowledge about identifying and dealing with abuse. Additionally, women with limited education may lack the resources or opportunities to speak up and seek help.
+
+
+# - Conclusion
+
+This data highlights a disturbing reality where a significant number of women endure domestic violence in its various forms. It serves as a reminder of the ever-growing need to address and combat domestic violence and support victims in order to create a world where individuals, men or women, live free from fear and abuse.
+
+# - Additional: Exploring the Knowledge and Use of Contraceptive Methods among Women in the DHS Survey
+
+```{r}
+## use of contraceptive methods vs age of respondent
+p7_use_c_method_age <- jo_dhs_clean2 %>% 
+  ggplot(mapping = aes(x = age,
+       fill = use_c_method)) +
+  scale_fill_manual(values = c("#FFADC6", "#C7EFCF", "#FCE694")) +
+  geom_density(alpha = 0.2) + 
+  labs(x = "Age (years)",
+       y = "Use of any contraceptive method")
+ # Before the age of 20, the women were not using any contrcapetive method during sexual intercourse. This could be due to the fact that they aim to reproduce during this time. However, this trend starts to decrease after the age of 25, where the traditional method is being used quiet often. This could imply that the idea of pregnancy is not entirely eliminated but also not urged.However, After the 30, it appears as though the use of modern methods of contraception increases, indicating that women tend to avoid getting pregnant during this age. This trends decreases immediately after the age of onset of menopause, where no contraceptive use peaks. 
+
+p8_know_cm_age1st <- jo_dhs_clean2 %>% 
+  ggplot(mapping = aes(x = age_at_1st_birth,
+       y = know_c_method)) + 
+  coord_flip() +
+  geom_boxplot(xlim = c(0.5, 3.5), fill = c("#C2A83E", "#B9E28C", "#9EADC8")) +
+  labs(x = "Age at first birth",
+       y = "Knowledge of any contraceptive methods")
+#The median age of women who don't know any contraceptive method is lower than those who know any method. there is no difference between traditional method and modern method.
+```
+
+## Trends in contraceptive use across respondents' age
+
+Before the age of 20, women did not use any contraceptive methods during sexual intercourse. This might be because they intend to conceive during this period. 
+
+However, as they reach 25, there is a decline in this trend, with the traditional method being more commonly used. This suggests that while the desire for pregnancy may not be completely eliminated, it is not actively pursued. 
+
+Beyond the age of 30, there is a noticeable increase in the use of modern contraceptive methods, indicating a preference for avoiding pregnancy during this stage.
+
+The usage of contraceptive methods then declines sharply after the onset of menopause, with no contraceptive use reaching its peak.
+
+```{r fig.height = 4, width = 4}
+#| fig.cap = "Figure 7: Change in use of contraceptive methods as women age."
+p7_use_c_method_age
+```
+
+## Comparing median ages of women at first birth with  varying contraceptive knowledge
+
+The median age of women who are unaware of any contraceptive methods is lower compared to those who do know about contraception. However, there is no noticeable difference in median age between those who know about traditional methods and those who know about modern methods of contraception.
+
+```{r fig.height = 4, width = 4}
+#| fig.cap = "Figure 8: Median ages at first birth across different levels of contraceptive knowledge among women."
+p8_know_cm_age1st
+```
+
+The findings suggest that lack of contraceptive knowledge may lead to earlier first births among women, while the specific type of contraceptive method used does not seem to have a notable effect on the timing of first births.
+
