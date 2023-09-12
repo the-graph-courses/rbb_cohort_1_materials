@@ -56,7 +56,7 @@ ir_ng_18_raw <-
                     ))
 ```
 
-**Note**: make sure ALL letters in the variable names are in lower case. If the data dictionary says "S1108BA" you should enter "s1108ba" in `col_select`.
+**Note**: make sure ALL letters in the variable names are in lower case. If the data dictionary says "S1108BA" you should change the letters to lowercase and enter "s1108ba" in `col_select`.
 
 # Variable Renaming
 

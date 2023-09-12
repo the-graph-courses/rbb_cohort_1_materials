@@ -1,0 +1,712 @@
+---
+title: "Domestic Violence in Colombia: Findings from the DHS"
+subtitle: "Final Project"
+author: "Sabina Rodriguez Velásquez"
+date: "2023-08-08"
+output: prettydoc::html_pretty
+editor_options: 
+chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F, warning = F, message = F, results = 'hide')
+```
+
+```{r packages}
+## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##
+## ~ Load Packages ~ ----
+##
+if(!require(pacman)) install.packages("pacman")
+pacman :: p_load(
+  dplyr,
+  tidyverse,
+  janitor,
+  here, 
+  haven,
+  inspectdf,
+  cowplot)
+##
+## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+```
+
+```{r prepare dataset}
+## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##
+## ~ Load Dataset ~ ----
+##
+## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ir_raw <- haven::read_dta(
+  here("data/COIR72FL.DTA"),
+    col_select = c(
+      v012, #age
+      v013, #age group
+      v024, #region
+      v025, #urban vs. rural
+      v106, #highest education
+      v131, #ethnicity
+      v150, #relationship to hoh
+      v151, #sex of hoh
+      v190, #wealth
+      v501, #marital status
+      v502, #union
+      v044, #selected for domestic violence
+      d104, #emotional violence
+      d106, #less severe violence
+      d107, #severe violence,
+      d108, #sexual violence,
+      d109, #first_event_violence,
+      d103a, #humiliated
+      d103b, #threatened with harm,
+      d103c, #insulted,
+      d103d, #threat to leave,
+      d103e, #threat to take kids
+      d105a, #pushed, shook, thrown
+      d105b, #slapped
+      d105c, #punched
+      d105d, #kicked or dragged
+      d105e, #strangled
+      d105f, #knife
+      d115b, #mother violence
+      d115c, #father violence
+      d115d, #daughterson violence
+      d115f, #sibling violence
+      d115g, #other relative violence
+      d115j, #former partner violence
+      d115k, #current bf violence
+      d115l, #former bf violence
+      d115o, #mother-in-law violence
+      d115p, #father-in-law violence
+      d115q, #other-in-law violence
+      d115v, #teacher violence
+      d115w)) #employer violence
+
+##
+## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##
+## ~ Rename variables ~ ----
+##
+## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##
+ir_renamed <- 
+  ir_raw %>% 
+  rename(
+    age = v012,
+    age_group = v013,
+    region = v024,
+    urban_rural = v025,
+    highest_education = v106,
+    ethnicity = v131,
+    relationship_hoh = v150,
+    sex_hoh = v151, 
+    wealth_index = v190,
+    marital_status = v501, 
+    union = v502,
+    selected_dv = v044,
+    emotional_violence = d104,
+    less_severe_violence = d106,
+    severe_violence = d107,
+    sexual_violence = d108,
+    first_event_violence = d109,
+    humiliated = d103a,
+    threat_harm = d103b, 
+    insulted = d103c,
+    threat_leave = d103d,
+    threat_take_kid = d103e,
+    pushed = d105a,
+    slapped = d105b,
+    punched = d105c,
+    kicked = d105d,
+    strangled = d105e,
+    knife_threat = d105f,
+    mother_violence = d115b,
+    father_violence = d115c,
+    children_violence = d115d,
+    sibling_violence = d115f,
+    relative_violence = d115g,
+    former_partner_violence = d115j,
+    current_bf_violence = d115k, 
+    former_bf_violence = d115l,
+    mother_in_law_violence = d115o,
+    father_in_law_violence = d115p,
+    other_in_law_violence = d115q,
+    teacher_violence = d115v,
+    employer_violence = d115w
+  )
+
+## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## 
+## ~ Turning variables into factors ~ ----
+##
+## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ir_converted <- 
+  ir_renamed %>%
+  haven::as_factor() # pass the data frame to as_factor()
+
+```
+
+```{r tools}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~ Tools ~ ----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Color Palette
+my_palette <- c("#76c893", "#52b69a", "#34a0a4", "#168aad","#1a759f", "#1e6091", "#184e77")
+```
+
+```{r demographic}
+
+## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## 
+## ~ Demographics ~ ----
+##
+## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Find out number of observations in survey
+num_participants <- 
+  nrow(ir_converted) # Total number of women surveyed: 38718
+
+# Find out how many women were interviewed for domestic violence
+num_domestic_violence <- 
+  ir_converted %>% 
+  filter(selected_dv == "woman selected and interviewed") %>% 
+  nrow() # Total number of women selected for domestic violence survey
+
+percent_domestic_violence <- 
+  round((num_domestic_violence/num_participants)*100, digits = 1)
+
+# Create subset of women who answered domestic violence questions
+ir_domestic_violence <- 
+  ir_converted %>% 
+  filter(selected_dv == "woman selected and interviewed")
+
+# Age
+ir_converted %>% 
+  summarize(median_age = median(age))
+
+# Region 
+ir_converted %>% 
+  group_by(region) %>% 
+  summarize(num_of_people = n())
+
+# Urban vs. rural 
+ir_converted %>% 
+  group_by(urban_rural) %>% 
+  summarize(num_of_people = n())
+
+# Ethnicity 
+ir_converted %>% 
+  group_by(ethnicity) %>% 
+  summarize(num_of_people = n())
+
+# Highest Education
+ir_converted %>% 
+  group_by(highest_education) %>% 
+  summarize(num_of_people = n())
+
+# Age by Region
+ir_converted %>% 
+  group_by(region) %>% 
+  summarize(num_of_people = n(),
+            median_age = median(age))
+
+```
+
+```{r domestic violence}
+
+## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## 
+## ~ Domestic Violence ~ ----
+##
+## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Create new variable for emotional violence
+ir_domestic_violence <- 
+  ir_domestic_violence %>% 
+  mutate(exp_emotional_violence = case_when(
+    (insulted == "yes, last year" | insulted == "yes, before last year") | (threat_leave == "yes, last year" | threat_leave == "yes, before last year") | (threat_take_kid == "yes, last year" | threat_take_kid == "yes, before last year") ~ "yes",
+    insulted == "no" | threat_leave == "never" | threat_take_kid == "no" ~ "no"))
+
+# Create new variable for physical violence
+ir_domestic_violence <- 
+  ir_domestic_violence %>% 
+  mutate(exp_physical_violence = case_when(
+    less_severe_violence == "yes" | severe_violence == "yes" ~ "yes",
+    less_severe_violence == "no" | severe_violence == "no" ~ "no"))
+
+# Create variable for experience some sort of domestic violence
+ir_domestic_violence <- 
+  ir_domestic_violence %>% 
+  mutate(exp_violence = case_when(
+    exp_emotional_violence == "yes" | exp_physical_violence == "yes" | sexual_violence == "yes" ~ "yes",
+    exp_emotional_violence == "no" | exp_physical_violence == "no" | sexual_violence == "no" ~ "no"))
+
+
+# Create small subset of women that experienced some violence
+violence <- 
+  ir_domestic_violence %>% 
+  filter(exp_violence == "yes")
+
+# Create small dataset dropping NA in domestic violence
+domestic_violence <- 
+  ir_domestic_violence %>% 
+  filter(!is.na(exp_violence))
+
+# Create variable for categorizing what type of domestic violence experienced
+domestic_violence <- 
+  domestic_violence %>% 
+  mutate(violence_type = case_when(
+    exp_emotional_violence == "yes" & exp_physical_violence == "yes" & sexual_violence == "yes" ~ "emotional, physical, and sexual",
+    exp_emotional_violence == "yes" & exp_physical_violence == "yes" ~ "emotional and physical",
+    exp_emotional_violence == "yes" & sexual_violence == "yes" ~ "emotional and sexual",
+    exp_physical_violence == "yes" & sexual_violence == "yes" ~ "physical and sexual",
+    exp_emotional_violence == "yes" ~ "emotional",
+    exp_physical_violence == "yes" ~ "physical",
+    sexual_violence == "yes" ~ "sexual",
+    ))
+
+# Summary Analysis
+
+domestic_violence %>% 
+  group_by(exp_violence) %>% 
+  summarize(num_of_people = n(),
+            percentage = round((n()/nrow(domestic_violence) *100), digits = 1)) # Out of people who had data, 57.4% did not experience any sort of domestic violence
+
+## Calculate number of women who experienced some sort of violence
+num_violence <- 
+  violence %>% 
+  nrow()
+
+## Calculate entire percentage of women who experienced violence
+percentage_violence <- 
+  round((num_violence/num_domestic_violence)*100, digits = 1)
+
+## Domestic violence by age and age group
+
+domestic_violence %>% 
+  group_by(exp_violence) %>% 
+  summarize(median_age = median(age)) # Similar distribution of age in people that experience and did not experience domestic violence
+
+domestic_violence %>% 
+  group_by(exp_violence, age_group) %>% 
+  summarize(count = n(),
+            percentage = round((n()/nrow(domestic_violence) *100), digits = 1)) %>% 
+  arrange(desc(count), .by_group = TRUE)
+
+## Domestic violence by region 
+
+violence %>% 
+  group_by(region) %>% 
+  summarize(count = n(),
+            percentage = round((n()/nrow(violence) *100), digits = 1))%>% 
+  arrange(desc(count), .by_group = TRUE)
+
+## Domestic violence by ethnicity 
+
+violence %>% 
+  group_by(ethnicity) %>% 
+  summarize(count = n(),
+            percentage = round((n()/nrow(violence) *100), digits = 1)) %>% 
+  arrange(desc(count), .by_group = TRUE) 
+
+domestic_violence %>% 
+  filter(ethnicity == c("indigenous", "black/mulato/afro-colombian/afro-descendant")) %>% 
+  group_by(exp_violence, ethnicity) %>% 
+  summarize(count = n(),
+            percentage = round((n()/nrow(domestic_violence) *100), digits = 1)) %>% 
+  arrange(desc(count), .by_group = TRUE) 
+
+## Domestic violence by highest education
+
+violence %>% 
+  group_by(highest_education) %>% 
+  summarize(count = n(),
+            percentage = round((n()/nrow(violence) *100), digits = 1)) %>% 
+  arrange(desc(count), .by_group = TRUE)
+  
+
+## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## 
+## ~ Perpetrators ~ ----
+##
+## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Create variable for categorizing perpetrator
+perpetrator_violence <- 
+  domestic_violence %>%
+  filter(exp_physical_violence == "yes") %>% 
+  mutate(perpetrator = case_when(
+    (mother_violence == "yes" | children_violence == "yes" | relative_violence == "yes") & (current_bf_violence == "yes" | former_bf_violence == "yes") ~ "Family and Partners",
+    mother_violence == "yes" | children_violence == "yes" | relative_violence == "yes" ~ "Family",
+    current_bf_violence == "yes" | former_bf_violence == "yes" ~ "Partners",
+    mother_violence == "no" & children_violence == "no" & relative_violence == "no" & current_bf_violence == "no" & former_bf_violence == "no" ~ "No one"
+    )) %>% 
+  select(mother_violence, children_violence, relative_violence, current_bf_violence, former_bf_violence, perpetrator)
+
+
+```
+
+```{r plots}
+
+## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## 
+## ~ Demographic Plots ~ ----
+##
+## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#Total women who answered to experienced domestic violence question
+total_violence <- 
+  sum(!is.na(ir_domestic_violence$exp_violence))
+
+# Total missing Experienced Domestic Violence question
+
+total_violence_na <-
+  sum(is.na(ir_domestic_violence$exp_violence))
+
+## Age Group Stats ----
+
+age_data <- 
+  domestic_violence %>% 
+  group_by(age_group, exp_violence) %>% 
+  count(age_group = factor(age_group)) %>% 
+  ungroup() %>% 
+  mutate(pct = round(prop.table(n) * 100, digits = 1))
+
+
+## Bar Graph of Age Groups
+
+bargraph_age_group <- 
+  ggplot(age_data) + # Use Subset without NA's
+  aes(x = age_group, y = n, fill = exp_violence) +
+  geom_col(position = "dodge") +
+  scale_fill_manual(values = my_palette) +
+  geom_text(aes(label = paste0(round(pct, 1),"%")), 
+            position = position_dodge(width = 0.9), 
+            vjust = 1, 
+            colour = "white", 
+            size = 3) +
+  labs(x = "Age Group",
+       y = "Number of Individulas (n)",
+       title = "Domestic Violence across Age Group",
+       subtitle = sprintf(sprintf("N = %s, missing data = %s", total_violence, total_violence_na)),
+       fill = "Domestic Violence?")
+
+
+## Ethnicity Stats ----
+
+ethnicity_data <- 
+  domestic_violence %>% 
+  group_by(ethnicity, exp_violence) %>% 
+  count(ethnicity = factor(ethnicity)) %>% 
+  ungroup() %>% 
+  mutate(pct = round(prop.table(n) * 100, digits = 1))
+
+
+## Bar Graph of Ethnicity Groups
+
+bargraph_ethnicity <- 
+  ggplot(ethnicity_data) + # Use Subset without NA's
+  aes(y = ethnicity, x = n, fill = exp_violence) +
+  geom_col(position = "dodge") +
+  scale_fill_manual(values = my_palette) +
+  geom_text(aes(label = paste0(round(pct, 1),"%")), 
+            position = position_dodge(width = 0.9), 
+            vjust = 1, 
+            colour = "white", 
+            size = 3) +
+  labs(x = "Ethnicity",
+       y = "Number of Individulas (n)",
+       title = "Domestic Violence across Ethnicity",
+       subtitle = sprintf(sprintf("N = %s, missing data = %s", total_violence, total_violence_na)),
+       fill = "Domestic Violence?")
+
+
+## Rural vs. Urban Stats ----
+
+urban_rural_data <- 
+  domestic_violence %>% 
+  group_by(urban_rural, exp_violence) %>% 
+  count(urban_rural = factor(urban_rural)) %>% 
+  ungroup() %>% 
+  mutate(pct = round(prop.table(n) * 100, digits = 1))
+
+
+## Bar Graph of Urban vs Rural Groups
+
+bargraph_urban_rural <- 
+  ggplot(urban_rural_data) + # Use Subset without NA's
+  aes(x = urban_rural, y = n, fill = exp_violence) +
+  geom_col(position = "dodge") +
+  scale_fill_manual(values = my_palette) +
+  geom_text(aes(label = paste0(round(pct, 1),"%")), 
+            position = position_dodge(width = 0.9), 
+            vjust = 1, 
+            colour = "white", 
+            size = 3) +
+  labs(x = "Urban vs. Rural",
+       y = "Number of Individulas (n)",
+       title = "Domestic Violence across Urban vs. Rural",
+       subtitle = sprintf(sprintf("N = %s, missing data = %s", total_violence, total_violence_na)),
+       fill = "Domestic Violence?")
+
+
+## Wealth Index ----
+
+wealth_data <- 
+  domestic_violence %>% 
+  group_by(wealth_index, exp_violence) %>% 
+  count(wealth_index = factor(wealth_index)) %>% 
+  ungroup() %>% 
+  mutate(pct = round(prop.table(n) * 100, digits = 1))
+
+
+## Bar Graph of Wealth
+
+bargraph_wealth <- 
+  ggplot(wealth_data) + # Use Subset without NA's
+  aes(x = wealth_index, y = n, fill = exp_violence) +
+  geom_col(position = "dodge") +
+  scale_fill_manual(values = my_palette) +
+  geom_text(aes(label = paste0(round(pct, 1),"%")), 
+            position = position_dodge(width = 0.9), 
+            vjust = 1, 
+            colour = "white", 
+            size = 3) +
+  labs(x = "Wealth Index",
+       y = "Number of Individulas (n)",
+       title = "Domestic Violence across Wealth Index",
+       subtitle = sprintf(sprintf("N = %s, missing data = %s", total_violence, total_violence_na)),
+       fill = "Domestic Violence?")
+
+
+## Highest Education ----
+
+## Highest Education Data
+
+education_data <- 
+  domestic_violence %>% 
+  group_by(highest_education, exp_violence) %>% 
+  count(highest_education = factor(highest_education)) %>% 
+  ungroup() %>% 
+  mutate(pct = round(prop.table(n) * 100, digits = 1))
+
+
+## Bar Graph of education
+
+bargraph_education <- 
+  ggplot(education_data) + # Use Subset without NA's
+  aes(x = highest_education, y = n, fill = exp_violence) +
+  geom_col(position = "dodge") +
+  scale_fill_manual(values = my_palette) +
+  geom_text(aes(label = paste0(round(pct, 1),"%")), 
+            position = position_dodge(width = 0.9), 
+            vjust = 1, 
+            colour = "white", 
+            size = 3) +
+  labs(x = "Highest Education",
+       y = "Number of Individulas (n)",
+       title = "Domestic Violence across Education Level",
+       subtitle = sprintf(sprintf("N = %s, missing data = %s", total_violence, total_violence_na)),
+       fill = "Domestic Violence?")
+  
+
+## Combining ALL demographic plots together into one ----
+
+combined_grids <- plot_grid(bargraph_age_group, bargraph_urban_rural, bargraph_wealth, bargraph_education, labels = "AUTO")
+
+
+## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## 
+## ~ Domestic Violence Plots ~ ----
+##
+## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+## Calculating Women who ANSWERED to DV Questions
+
+total_answered_dv <-
+  sum(!is.na(domestic_violence$exp_violence))
+
+total_answered_dv_na <- 
+  ir_domestic_violence %>% 
+  filter(is.na(exp_violence)) %>% # Missing Data 
+  nrow()
+
+percentage_na_violence <- 
+  round(total_answered_dv_na/total_answered_dv * 100, digits = 1)
+
+## Calculating women who reported EXPERIENCING DV
+
+total_yes_dv <- 
+  nrow(violence)
+
+# Calculate percent of women who ANWERED that REPORTED DV
+percent_yes_answered_dv <- 
+  round(total_yes_dv/total_answered_dv * 100, digits = 1)
+
+## Types of Domestic Violence ----
+
+#Total women experienced domestic violence values
+total_violence_type <- 
+  sum(!is.na(domestic_violence$violence_type))
+
+# Total missing Experienced Domestic Violence values
+
+total_violence_type_na <-
+  sum(is.na(domestic_violence$violence_type))
+
+## Create subset data for types of violence
+
+type_dv_data <- 
+  domestic_violence %>% 
+  filter(!is.na(violence_type)) %>% # Remove NA's 
+  count(violence_type = factor(violence_type)) %>% 
+  arrange(desc(n)) %>%
+  mutate(pct = round(prop.table(n) * 100, digits = 1))
+
+
+## Create bargraph for types of violence
+
+bargraph_violence_type <- 
+  ggplot(type_dv_data, 
+         aes(x = violence_type, y = n)) + # Use Subset without NA's
+  geom_segment(aes(x = reorder(violence_type, n), xend = violence_type, y= 0, yend = n, fill = "lightgrey")) +
+  geom_point(size = 2.5,
+             color = "#168aad") +
+  coord_flip() +
+  geom_text(aes(label = paste0(round(pct, 1),"%")), # Add percentage to each bar
+            position = position_dodge(width = 0.9), 
+            vjust = -1, 
+            colour = "black", 
+            size = 3) +
+  theme_minimal() +
+  theme(panel.grid.minor.y = element_blank(),
+        panel.grid.major.y = element_blank(),
+        legend.position="none") +
+  labs(y = "Number of Individulas (n)",
+       x = "",
+       title = "Emotional vs. Physical vs. Sexual Violence",
+       subtitle = sprintf(sprintf("N = %s, missing data = %s", total_violence_type, total_violence_type_na)))
+
+## Perpetrator ----
+
+#Total women who answered if and who performed violence
+
+total_perpetrator <- 
+  sum(!is.na(perpetrator_violence$perpetrator))
+
+
+# Total missing Experienced Domestic Violence values
+
+total_perpetrator_na <-
+  sum(is.na(perpetrator_violence$perpetrator)) 
+
+
+## Create subset data for types of violence
+
+perpetrator_data <- 
+  perpetrator_violence %>% 
+  filter(!is.na(perpetrator)) %>% # Remove NA's 
+  count(perpetrator = factor(perpetrator)) %>% 
+  arrange(desc(n)) %>%
+  mutate(pct = round(prop.table(n) * 100, digits = 1))
+
+# Create bargraph to represent physical perpetrator 
+
+bargraph_perpetrator <- 
+  ggplot(perpetrator_data, 
+         aes(x = perpetrator, y = n)) + # Use Subset without NA's
+  geom_segment(aes(x = reorder(perpetrator, n), xend = perpetrator, y= 0, yend = n, fill = "lightgrey")) +
+  geom_point(size = 2.5,
+             color = "#168aad") +
+  coord_flip() +
+  geom_text(aes(label = paste0(round(pct, 1),"%")), # Add percentage to each bar
+            position = position_dodge(width = 0.9), 
+            vjust = -1, 
+            colour = "black", 
+            size = 3) +
+  theme_minimal() +
+  theme(panel.grid.minor.y = element_blank(),
+        panel.grid.major.y = element_blank(),
+        legend.position="none") +
+  labs(y = "Number of Individulas (n)",
+       x = "",
+       title = "Perpetrator of Women who Experienced Physical Violence",
+       subtitle = sprintf(sprintf("N = %s, missing data = %s", total_perpetrator, total_perpetrator_na)))
+
+```
+
+# **Context**
+
+Colombia has achieved important victories in the last two decades regarding the promotion of gender equality and women' empowerment, although there are still significant gaps to reduce.
+
+According to the [UN Women website](https://lac.unwomen.org/en/donde-estamos/colombia), Indigenous and Afro-Colombian women have been affected disproportionately by violence derived from the conflict; among 3,445 cases of murder in Indigenous and Afro-Colombian individuals, 65.5% were women. Additionally, in a [UN country report](https://data.unwomen.org/features/covid-19-survey-violence-against-women-colombia-heralds-local-level-data-and-changes#:~:text=The%20survey%20conducted%20in%20Colombia,physical%20violence%2C%20denial%20of%20basic) measuring the violence against women during the COVID-19 confinement (pandemic), a survey conducted in Colombia of more than 1200 women between August and September demonstrated that violence against women was pervasive throughout the country, with **6 in 10 women (63%)** reporting that they or someone they know has experienced at least one form of violence.
+
+The objective of this report is to descriptively analyse domestic violence against women in Colombia.
+
+# **Data set Description**
+
+The data set used in this report is a subset of the **Demographic and Health Surveys (DHS)**. The DHS are a series of standardized surveys conducted periodically in developing countries that collect data on various aspects of population, health, and nutrition. These surveys, which are funded by the United States Agency for International Development (USAID), are a gold-standard source of reliable public health data for many countries and international bodies.
+
+The included subset is part of the *women's recode dataset*. It contain individual-level data on women aged 15 to 49 in the surveyed households, from Colombia.
+
+# **Sample Characteristics**
+
+Out of `r num_participants` surveyed individuals, a total of `r num_domestic_violence` (`r percent_domestic_violence`%) were included in the domestic violence module. From that subset of participants, `r total_violence` women answered to some sort of question on domestic violence (emotional, physical, or sexual). Overall, out of the women who answered, a total of `r total_yes_dv` women (`r percent_yes_answered_dv`%) reported experiencing some sort of domestic violence.
+
+*It is important to take note of the important and relatively high amount of missing values (NA) in questions related to domestic violence.* 
+
+### Distribution of Domestic Violence in Women by Demographics
+
+Based on the sample of women interviewed for the domestic violence module, the majority of women reported **NOT** experiencing domestic violence. A similar pattern can be seen through different demographics (e.g. age groups, urban vs. rural, wealth index, or education level).
+
+```{r combined plots, fig.width=15, fig.height=10, fig.cap= "Figure 1. Domestic Violence Distribution across Various Demographic Variables"}
+
+## Combining ALL demographic plots together into one ----
+
+combined_grids <- plot_grid(bargraph_age_group, bargraph_urban_rural, bargraph_wealth, bargraph_education, labels = "AUTO")
+
+print(combined_grids)
+
+```
+
+<br>
+
+# **Domestic Violence: Descriptive Analysis**
+
+### Types of Domestic Violence
+
+To better understand the type of domestic violence experienced in women who **reported experiencing** some sort of domestic violence, Figure 2 breaks down the different types of domestic violence and their reported percentage. 
+
+*CAUTION: Note the amount of missing values*
+
+Based on Figure 2, the three main types of domestic violence reported by Colombian women are emotional and physical violence, physical violence alone, and emotional violence alone.
+
+```{r dv_type plot, fig.cap= "Figure 2. Domestic Violence Distribution by Type"}
+
+print(bargraph_violence_type)
+
+```
+
+<br>
+
+### Perpetrators
+
+When asking to identify the perpetrator (for physical violence ONLY), fewer women answered. Overall, 90.9% of respondents did not identify any of the given options as a perpetrator (mother, children, relative, current boyfriend, or former boyfriend). For the respondents that did identify someone, 6.7% identified family members (mother, children, other relative), 1.9% identified partners (current boyfriend, former boyfriend), and only 0.5% identified **both** family member **and** partner.
+
+```{r perpetrator plot, fig.cap= "Figure 3. Reported Perpetrators"}
+
+print(bargraph_perpetrator)
+
+```
+
+<br>
+
+# **Conclusion**
+
+Overall, `r percent_yes_answered_dv`% of women surveyed reported some sort of domestic violence. When looking at the distribution of domestic violence by demographics, no specific factor or pattern was identified.
+
+A high number of missing values were identified to questions related to domestic violence. This might be due to the fact that some participants did not want to answer those sensitive questions. Due to the high number of missing values, the results above have to be carefully analysed and interpreted.
+
