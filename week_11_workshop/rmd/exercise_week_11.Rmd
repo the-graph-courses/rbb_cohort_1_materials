@@ -98,7 +98,7 @@ ir_ng_18_clean <-
 
 ## Histograms with Continuous Variables (position = "fill")
 
-a.  Choose one of the continuous variables from the dataset: age, num_kids, age_first_sex, age_first_cohabitation or age_first_birth. Then, generate a simple histogram of this variable. Make sure to provide the necessary labels.
+a.  Choose one of the continuous variables from the dataset: `age`, `num_kids`, `age_first_sex`, `age_first_cohabitation` or `age_first_birth.` Then, generate a simple histogram of this variable. Make sure to provide the necessary labels.
 
 b.  Now, incorporate the `fill` aesthetic to color the bars of your histogram by levels of a categorical variable. Map one of the new malaria knowledge variables to fill - `aes(..., fill = malaria_variable)`, and use `position = "fill"` within the histogram function to create a stacked histogram. This graph should show how the responses to this question differ at the various levels of the chosen continuous variable.
 

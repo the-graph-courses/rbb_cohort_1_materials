@@ -52,7 +52,9 @@ ir_raw <-
   haven::read_dta(here("data/NGIR7BFL_mini.DTA"),
                   col_select = c(
                     # basic information
-                    v006, v007, v009, v010, v012, v013, v022, v024, v025, v106, v130, v190,                     # fertility and reproductive timing
+                    v006, v007, v009, v010, v012, v013, 
+                    v022, v024, v025, v106, v130, v190,   
+                    # fertility and reproductive timing
                     v201, v212, v213, v511, v531))
 ```
 
@@ -81,29 +83,31 @@ ir_renamed <-
          age_first_sex = v531)
 ```
 
-Another note on importing data: the `read_dta()` function reads in factor data as a special data type called **labelled** data.
+Another note on importing data: the **`read_dta()`** function reads in factor data as a special data type called **labelled** data.
 
 ```{r}
 # Review data types
 glimpse(ir_renamed)
 ```
 
-Several variables are of class "dbl+lbl". This mean the columns display only numbers, and each number corresponds to a survey answer.
+Several variables are of class "`dbl+lbl`". This mean the columns display only numbers, and each number corresponds to a survey answer.
 
 This is cryptic and can be problematic for later analysis, so we recommend converting these to regular R factors using the function `haven::as_factor()`. This will replace the numbers with the corresponding text label.
 
 For example:
 
 ```{r}
+# convert from labelled data to regular factors
 ir_clean <- 
   ir_renamed %>% 
-  # convert from labelled data to regular factors
-  haven::as_factor() 
+  haven::as_factor()
 
-# NOTE: There is another function called as_factor() from the {forcats} package, and one called as.factor() from {base} R. Remember to add "haven::" before as_factor() to make sure you're using the correct one for .dta files.
+
 ```
 
-Now you can see that the variables that were previously "dbl+lbl" are now "fct" (factor) and the numbers are replaced with descriptive text.
+**NOTE**: There is another function called `as_factor()` from the {forcats} package, and one called `as.factor()` from {base} R. Remember to add "`haven::`" before `as_factor()` to make sure you're using the correct one for .dta files.
+
+Now you can see that the variables that were previously "`dbl+lbl`" are now "`fct`" (factor) and the numbers are replaced with descriptive text.
 
 ```{r}
 # Review data types
@@ -114,9 +118,12 @@ glimpse(ir_clean)
 
 ```{r}
 # histogram age first birth
-ggplot(ir_clean, 
-  aes(age_first_birth)) +
-  geom_histogram(bins = 25, color = "white", fill = "pink") 
+ ggplot(data = ir_clean,
+   mapping = aes(x = age_first_birth)) +
+   geom_histogram(bins = 25, 
+     color = "white", 
+     fill = "hotpink") +
+   theme_classic()
 ```
 
 ## Comparing distributions
@@ -127,30 +134,35 @@ For example, mapping a categorical variable to the `fill` aesthetic will create 
 
 ```{r}
 # histogram age first birth by urban/rural
-ggplot(ir_clean, 
-  aes(age_first_birth,
-    fill = urban_rural)) +
-  geom_histogram(bins = 25, color = "white") 
+ # histogram age first birth
+ ggplot(data = ir_clean,
+   mapping = aes(x = age_first_birth,
+     fill = urban_rural)) +
+   geom_histogram(bins = 25, 
+     color = "white") +
+   theme_classic()
 ```
 
 ## Position adjustments
 
-![](images/gg_min_build_positions.png){width="634"}
+![](images/gg_min_build_positions.png){width="708"}
 
 ### Histograms
 
 You can change the position adjustment within `geom_histogram()`.
 
-Possible values for the argument **position** in `geom_histogram()` are `“identity”`, `“stack”`, `“dodge”`, and `"fill"`. Default value is `“stack”`.
+Possible values for the **position** argument in `geom_histogram()` are `“identity”`, `“stack”`, `“dodge”`, and `"fill"`. Default value is `“stack”`.
 
 ```{r}
-# histogram age first birth by urban/rural
-ggplot(ir_clean, 
-  aes(age_first_birth,
-    fill = urban_rural)) +
-  geom_histogram(bins = 25, 
-    color = "white",
-    position = "dodge") 
+# histogram age first birth by urban/rural + position adjustment
+ ggplot(data = ir_clean,
+   mapping = aes(x = age_first_birth,
+     fill = urban_rural)) +
+   geom_histogram(
+     bins = 25, 
+     color = "white",
+     position = "dodge") +
+   theme_classic() 
 ```
 
 ### Barplots
@@ -159,9 +171,10 @@ Like histograms, bar plots also visualize distributions, but for categorical var
 
 ```{r}
 # percent stacked bar plot of education
-ggplot(ir_clean, 
-  aes(highest_educ,
+ggplot(data = ir_clean,
+  mapping = aes(
+    x = highest_educ,
     fill = urban_rural)) +
   geom_bar(position = "fill") +
-  theme_classic() # built-in ggplot theme
+  theme_bw()
 ```
