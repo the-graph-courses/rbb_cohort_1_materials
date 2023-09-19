@@ -136,7 +136,7 @@ Once your work is done, to submit it you should:
 
 -   Knit your Rmd to an HTML/PDF or DOCX format.
 
--   Zip the Rmd and the knitted output into a single folder, and upload to the assignment page.
+-   Upload BOTH your Rmd and one of the export formats to the submission page.
 
 
 # **Appendix 1: Sample reports**
